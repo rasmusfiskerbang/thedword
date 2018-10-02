@@ -1,2 +1,1 @@
-# Redirect default Netlify subdomain to primary domain
-http://thedword.netlify.com/* http://thedword.rbind.io/:splat 301!
+http://thedword.rbind.io/*    https://thedword.rbind.io/:splat  301!
