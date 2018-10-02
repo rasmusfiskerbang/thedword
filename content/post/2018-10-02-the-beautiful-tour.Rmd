@@ -1,0 +1,327 @@
+---
+title: The Beautiful Tour
+author: Rasmus Fisker Bang
+date: '2018-10-02'
+slug: the-beautiful-tour
+categories:
+  - R
+tags:
+  - EDA
+  - visualization
+coverCaption: Photo by Howard Lawrence B on Unsplash
+coverImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1538418534/howard-lawrence-b-652037-unsplash.jpg
+thumbnailImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1538420521/thumbnail-TDF.jpg
+thumbnailImagePosition: buttom
+autoThumbnailImage: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Loading packages
+library(tidyverse)
+library(rstudioapi)
+library(lubridate)
+library(cartography)
+library(gridExtra)
+library(gganimate)
+
+# ggplot theme
+theme_set(theme_bw())
+
+# Loading data
+stages <- read_csv("data/The_Beautiful_Tour/stages_TDF.csv")
+```
+
+## Introduction
+
+In this project we are going to explore the infamous bicycling race Tour De France!
+First we will take look at the dataset, and then we are going to try to answer some of the following questions.
+
+* What is the most winning country?
+* Who is the most winning rider?
+* How many different type of stages do we have, and how frequent are they?
+* Who are the kings of the different types of stage?
+* What are the most visited cities?
+* Are thery any cities for flat stages?, mountain stages? etc.
+* What is the distribution of stages distances for the different types?
+* How has the number of stages changed through time?
+
+Let's get started by taking a look at the data!
+
+## Summary of the data
+
+First, let us take a look at the first couple of observations
+
+```{r warning=FALSE}
+
+head(stages)
+
+```
+
+Now we will print a summary of the Tour De France (TDF: Henceforth) dataset.
+
+```{r warning=FALSE}
+
+summary(stages)
+
+```
+
+From the summary above it can be seen that we are dealing with 8 different variables.
+There is 1 numeric variable, Distance, and the rest are categoric.
+
+Further, from the Date variable we see that the first observation is from the 1st of June 1903 and the last observation is from 23rd of June 2017. We have over 100 years of data!
+
+From the Distance variable we notice that the shorest stage is 1 km while longest is 482 km, aauch sore leg!
+The average stage is 197 km.
+
+Now, let's answer does questions!
+
+## What is the most winning country?
+
+We will answer this question by grouping on the Winner_Country variable, and then counting how many instances we have of each country. The plot below shows the result.
+
+```{r echo=FALSE}
+
+A1 <- stages %>% group_by(Winner_Country) %>% summarise(nwins = n()) %>% arrange(desc(nwins))
+A1 <- A1[!is.na(A1$Winner_Country),]
+A1 <- A1[1:20,]
+
+A1 %>% mutate(Winner_Country = fct_reorder(Winner_Country, desc(nwins))) %>%
+  ggplot(aes(x = Winner_Country, y = nwins, fill = nwins)) + geom_bar(stat = "identity") +
+  coord_flip() + scale_fill_gradient(low = carto.pal("blue.pal")[1], 
+  high = tail(carto.pal("blue.pal"),1), guide = FALSE) +
+  labs(x = "Country",y = "Number of wins", title = "Number of wins for different countries",
+  caption = "Source: Wikipedia")
+
+```
+
+No surprise for the winner. France has the most stage victories. This makes good sense since there is a large tradition for cycling in France, and the stages are mainly held in France.
+
+The rest of the pack is not that surprising eiter, with Belgium, Italy, The Nederlands, Spain, etc. being great cycling nations. One surprise though is the small nation Luxembourg with a rather large amount of wins. That must be the Schleck brothers playing around!
+
+## Who is the most winning rider?
+
+Who has the most stage wins in TDF history, sure that's an interesting question! We will use the same method as in the previous question. The plot below display the result
+
+```{r echo=FALSE}
+
+A2 <- stages %>% group_by(Winner) %>% summarise(nwins = n()) %>% arrange(desc(nwins))
+A2 <- A2[1:20,]
+
+A2[6,1] <- "Lance Armstrong"
+
+A2 %>% mutate(Winner = fct_reorder(Winner, desc(nwins))) %>%
+  ggplot(aes(x = Winner, y = nwins, fill = nwins)) + geom_bar(stat = "identity") +
+  coord_flip() + scale_fill_gradient(low = carto.pal("orange.pal")[1], 
+  high = tail(carto.pal("orange.pal"),1), guide = FALSE) +
+  labs(x = "Rider",y = "Number of wins", title = "Number of wins for different riders",
+  caption = "Source: Wikipedia")
+
+```
+
+And the winner is ... drum roll please! ... Eddy Merckx! The belgian won 34 stages.
+
+Now we will take a look at the different types of stages
+
+## How many different type of stages do we have, and how frequent are they?
+
+We have 18 different types of stages. However, many of them fall into similar categories. Hence we will relabel the 18 types into three distinct types instead: Flat, Mountain and Time Trial. The table below display how many stages of the different types we have in our data.
+
+```{r echo=FALSE}
+
+A3 <- stages %>% group_by(Type) %>% summarise(ntype = n())
+
+# Let's collect some of them into similar types
+unique_types <- tolower(unique(stages$Type))
+mountain_types <- unique_types[str_detect(unique_types,"mountain") | str_detect(unique_types,"hilly")]
+non_mountain_types <- setdiff(unique_types,mountain_types)
+time_trials_types <- non_mountain_types[str_detect(non_mountain_types,"trial")]
+flat_types <- setdiff(non_mountain_types,time_trials_types)
+
+stages$Type[tolower(stages$Type) %in% mountain_types] <- "Mountain"
+stages$Type[tolower(stages$Type) %in% flat_types] <- "Flat"
+stages$Type[tolower(stages$Type) %in% time_trials_types] <- "Time trial"
+
+A3 <- stages %>% group_by(Type) %>% summarise(ntype = n())
+A3
+
+```
+
+Clearly, we have most Flat stages, then Mountain stages and Time Trials are the least common. This is pretty much as expected.
+
+Now that we have explored the different stage types, we will look which riders have won the most stages in the respective types of stages.
+
+## Who are the kings of the different types of stage?
+
+The plot below display the number of stage wins seperate by the type of the stage.
+
+```{r echo=FALSE}
+
+A5 <- stages %>% count(Type,Winner) %>% group_by(Type) %>% slice(which.max(n))
+
+A5 %>% ggplot(aes(x = Type, y = n)) + geom_bar(stat = "identity", aes(fill = Winner)) + 
+       scale_fill_manual(values = carto.pal("orange.pal")) + 
+       guides(fill = guide_legend(title = "Riders")) + labs(y = "Number of wins", 
+       title = "Number of wins for different stage types and riders", 
+       caption = "Source: Wikipedia")
+
+```
+
+Cavendish is the king of the mass sprint, Merckx is the king of the mountain and
+Hinault is the king of the time trial.
+
+TDF visits a lot of different cities each year both in France and some in surrouding countries. We want to know if there are some cities that TDF visits more often than others.
+
+## What are the most visited cities?
+
+The chart below displays the top 20 most visited cities. 
+
+```{r echo=FALSE}
+
+Origin_count <- stages %>% count(Origin)
+Destination_count <- stages %>% count(Destination)
+colnames(Origin_count)[1] <- "Key"
+colnames(Destination_count)[1] <- "Key"
+
+A6 <- full_join(Origin_count,Destination_count,"Key")
+
+A6$n.x[is.na(A6$n.x)] <- 0
+A6$n.y[is.na(A6$n.y)] <- 0
+
+A6 <- A6 %>% mutate(n = n.x + n.y) %>% select(City = Key, n) %>% arrange(desc(n))
+
+A6 <- A6[1:20,]
+
+A6 %>% mutate(City = fct_reorder(City,desc(n))) %>%
+       ggplot(aes(x = City, y = n, fill = n)) + geom_bar(stat = "identity") +
+       coord_flip() + scale_fill_gradient(low = carto.pal("red.pal")[1], 
+       high = tail(carto.pal("red.pal"),1), guide = FALSE) + 
+       labs(x = "City",y = "Number of visits", 
+       title = "Number of visits for different cities",caption = "Source: Wikipedia")
+
+```
+
+Unsuprisingly Paris is the most visited city since it is visited at large stage each year, however, the famous capital is rather closely followed by Bordeaux.
+Pau is also offently visited, which makes sense since Pau is known as 
+the gateway to the Pyrenees.
+
+Okay, now we have seen that there definitely is some cities that are more popular than others. Is the dependent on the type of stage?
+
+## Are thery any cities for flat stages?, mountain stages? etc.
+
+The charts below display the top 10 most visited cities for different types of stages.
+
+```{r echo=FALSE, fig.height = 9}
+
+Origin_by_type <- stages %>% count(Type,Origin) 
+Destination_by_type <- stages %>% count(Type,Destination)
+
+colnames(Origin_by_type)[2] <- "Key"
+colnames(Destination_by_type)[2] <- "Key"
+
+Origin_by_type <- split(Origin_by_type, Origin_by_type$Type)
+Destination_by_type <- split(Destination_by_type, Destination_by_type$Type)
+
+A7 <- list()
+
+for (i in 1:length(Origin_by_type)) {
+  joined_temp <- full_join(Origin_by_type[[i]],Destination_by_type[[i]],"Key")
+  
+  joined_temp$n.x[is.na(joined_temp$n.x)] <- 0
+  joined_temp$n.y[is.na(joined_temp$n.y)] <- 0
+  
+  joined_temp <- joined_temp %>% mutate(n = n.x + n.y, Type = unique(Type.x)[1]) %>%
+                 select(Type,City = Key, n) %>% arrange(desc(n))  
+  A7[[i]] <- joined_temp[1:10,]
+}
+
+p1 <- A7[[1]] %>% mutate(City = fct_reorder(City,desc(n))) %>%
+      ggplot(aes(x = City, y = n, fill = n)) + geom_bar(stat = "identity") +
+      coord_flip() + scale_fill_gradient(low = carto.pal("red.pal")[1], 
+      high = tail(carto.pal("red.pal"),1), guide = FALSE) + 
+      labs(x = "City",y = "Number of visits", 
+      title = "Number of visits for different cities for flat stages",
+      caption = "Source: Wikipedia")
+
+p2 <- A7[[2]] %>% mutate(City = fct_reorder(City,desc(n))) %>%
+      ggplot(aes(x = City, y = n, fill = n)) + geom_bar(stat = "identity") +
+      coord_flip() + scale_fill_gradient(low = carto.pal("red.pal")[1], 
+      high = tail(carto.pal("red.pal"),1), guide = FALSE) + 
+      labs(x = "City",y = "Number of visits", 
+      title = "Number of visits for different cities for mountain stages",
+      caption = "Source: Wikipedia")
+
+p3 <- A7[[3]] %>% mutate(City = fct_reorder(City,desc(n))) %>%
+      ggplot(aes(x = City, y = n, fill = n)) + geom_bar(stat = "identity") +
+      coord_flip() + scale_fill_gradient(low = carto.pal("red.pal")[1], 
+      high = tail(carto.pal("red.pal"),1), guide = FALSE) + 
+      labs(x = "City",y = "Number of visits", 
+      title = "Number of visits for different cities for time trials",
+      caption = "Source: Wikipedia")
+
+grid.arrange(p1,p2,p3)
+
+```
+
+Paris is the most visited city for flat stages, Luchon and Pau (again) are the most visited
+mountain stage cities. Bourdeaux and Paris are the most visited time trial cities. In fear of stating the obvious, it makes good sense that the top 10 mountain stage cities are different from the top 10 flat stage cities, since they need to be near mountains.
+
+So, which cities are the most visited depends on the type of stage. Can we find the same pattern for the distribution of the distance of the stages?
+
+## Does the distribution of stages distances changes for different stage types?
+
+The plot below displays the densities, i.e. the area under the curve is 1, for the distribution of stages distances for different types of stages. 
+
+```{r echo=FALSE}
+
+stages %>% ggplot(aes(x = Distance,fill = Type)) +
+           geom_density(alpha = 0.7) +
+           scale_fill_manual(values = carto.pal("green.pal")[c(1,210,105)]) +
+           labs(y = "Density", title = "Distance distribution for different stage types", x = "Distance in km",
+           caption = "Source: Wikipedia")
+
+```
+
+The plot shows that most time trials are between 0-100 km, with some long distance outliers. The distribution of flat and mountain stages are similar with a mean distance of around 200 km, however there are more long flat stages than long mountain stages. This may because there where some very long flat stages in the beginning of the TDF history. 
+
+This is a static picture, could we imagine that these distributions would change over time?
+
+## How has the number of stages changed through time?
+
+The plots below show how the number of stages has changed through the years, along with the average distance of the stages.
+
+```{r echo=FALSE, warning=FALSE}
+
+stages$Stage[str_detect(stages$Stage,"[A-Z]")] <- ""
+stages$Stage <- as.numeric(stages$Stage)
+
+A10 <- stages %>% mutate(Year = year(Date)) %>% group_by(Year) %>% 
+       summarise(nstage = max(Stage, na.rm = TRUE), mdistance = mean(Distance))
+
+p1 <- A10 %>% ggplot(aes(x = Year, y = nstage)) +
+      geom_segment( aes(x = Year, xend = Year, y=0, yend = nstage), color="grey") +
+      geom_point(color = "pink", size = 2) + 
+      labs(y = "Number of stages", title = "Number of stages and average distance through the years",
+      x = "Time")
+
+p2 <- A10 %>% ggplot(aes(x = Year, y = mdistance)) +
+      geom_line(color = "pink") +
+      labs(x = "Time", y = "Average stage distance", caption = "Source: Wikipedia")
+
+grid.arrange(p1,p2)    
+
+```
+
+As seen from the plots above, the number of stages increases through the years and flattens out. Notice the WWs.
+
+In the beginning of TDF there were few very long stages. Now we have shorter and more stages.
+
+## Conclusions
+
+Hurra! Now we have answered all of the questions. 
+
+We have seen that France is the most winning country, and that Eddy Merckx is a true champ, while Cavendish is the king of the mass sprint. We have seen that Paris is a very popular city, while Pau is the gate to the Pyrenees. 
+
+We have seen that Time trials are short and that Mountain and Flat stages have similar length.
+
+At last, we have seen how the number of stages have increased through the years, and the average distance has dropped.

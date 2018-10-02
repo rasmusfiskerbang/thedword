@@ -1,0 +1,144 @@
+---
+title: The Beautiful Tour
+author: Rasmus Fisker Bang
+date: '2018-10-02'
+slug: the-beautiful-tour
+categories:
+  - R
+tags:
+  - EDA
+  - visualization
+coverCaption: Photo by Howard Lawrence B on Unsplash
+coverImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1538418534/howard-lawrence-b-652037-unsplash.jpg
+thumbnailImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1538420521/thumbnail-TDF.jpg
+thumbnailImagePosition: buttom
+autoThumbnailImage: no
+---
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this project we are going to explore the infamous bicycling race Tour De France! First we will take look at the dataset, and then we are going to try to answer some of the following questions.</p>
+<ul>
+<li>What is the most winning country?</li>
+<li>Who is the most winning rider?</li>
+<li>How many different type of stages do we have, and how frequent are they?</li>
+<li>Who are the kings of the different types of stage?</li>
+<li>What are the most visited cities?</li>
+<li>Are thery any cities for flat stages?, mountain stages? etc.</li>
+<li>What is the distribution of stages distances for the different types?</li>
+<li>How has the number of stages changed through time?</li>
+</ul>
+<p>Let’s get started by taking a look at the data!</p>
+</div>
+<div id="summary-of-the-data" class="section level2">
+<h2>Summary of the data</h2>
+<p>First, let us take a look at the first couple of observations</p>
+<pre class="r"><code>head(stages)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##   Stage Date       Distance Origin Destination Type  Winner Winner_Country
+##   &lt;chr&gt; &lt;date&gt;        &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;         
+## 1 1     2017-07-01      14  Düsse… Düsseldorf  Indi… Gerai… GBR           
+## 2 2     2017-07-02     204. Düsse… Liège       Flat… Marce… GER           
+## 3 3     2017-07-03     212. Vervi… Longwy      Medi… Peter… SVK           
+## 4 4     2017-07-04     208. Mondo… Vittel      Flat… Arnau… FRA           
+## 5 5     2017-07-05     160. Vittel La Planche… Medi… Fabio… ITA           
+## 6 6     2017-07-06     216  Vesoul Troyes      Flat… Marce… GER</code></pre>
+<p>Now we will print a summary of the Tour De France (TDF: Henceforth) dataset.</p>
+<pre class="r"><code>summary(stages)</code></pre>
+<pre><code>##     Stage                Date               Distance    
+##  Length:2236        Min.   :1903-07-01   Min.   :  1.0  
+##  Class :character   1st Qu.:1938-07-17   1st Qu.:156.0  
+##  Mode  :character   Median :1969-07-02   Median :199.0  
+##                     Mean   :1966-08-02   Mean   :196.8  
+##                     3rd Qu.:1991-07-20   3rd Qu.:236.0  
+##                     Max.   :2017-07-23   Max.   :482.0  
+##     Origin          Destination            Type          
+##  Length:2236        Length:2236        Length:2236       
+##  Class :character   Class :character   Class :character  
+##  Mode  :character   Mode  :character   Mode  :character  
+##                                                          
+##                                                          
+##                                                          
+##     Winner          Winner_Country    
+##  Length:2236        Length:2236       
+##  Class :character   Class :character  
+##  Mode  :character   Mode  :character  
+##                                       
+##                                       
+## </code></pre>
+<p>From the summary above it can be seen that we are dealing with 8 different variables. There is 1 numeric variable, Distance, and the rest are categoric.</p>
+<p>Further, from the Date variable we see that the first observation is from the 1st of June 1903 and the last observation is from 23rd of June 2017. We have over 100 years of data!</p>
+<p>From the Distance variable we notice that the shorest stage is 1 km while longest is 482 km, aauch sore leg! The average stage is 197 km.</p>
+<p>Now, let’s answer does questions!</p>
+</div>
+<div id="what-is-the-most-winning-country" class="section level2">
+<h2>What is the most winning country?</h2>
+<p>We will answer this question by grouping on the Winner_Country variable, and then counting how many instances we have of each country. The plot below shows the result.</p>
+<pre><code>## Warning: pakke &#39;bindrcpp&#39; blev bygget under R version 3.4.4</code></pre>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>No surprise for the winner. France has the most stage victories. This makes good sense since there is a large tradition for cycling in France, and the stages are mainly held in France.</p>
+<p>The rest of the pack is not that surprising eiter, with Belgium, Italy, The Nederlands, Spain, etc. being great cycling nations. One surprise though is the small nation Luxembourg with a rather large amount of wins. That must be the Schleck brothers playing around!</p>
+</div>
+<div id="who-is-the-most-winning-rider" class="section level2">
+<h2>Who is the most winning rider?</h2>
+<p>Who has the most stage wins in TDF history, sure that’s an interesting question! We will use the same method as in the previous question. The plot below display the result</p>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>And the winner is … drum roll please! … Eddy Merckx! The belgian won 34 stages.</p>
+<p>Now we will take a look at the different types of stages</p>
+</div>
+<div id="how-many-different-type-of-stages-do-we-have-and-how-frequent-are-they" class="section level2">
+<h2>How many different type of stages do we have, and how frequent are they?</h2>
+<p>We have 18 different types of stages. However, many of them fall into similar categories. Hence we will relabel the 18 types into three distinct types instead: Flat, Mountain and Time Trial. The table below display how many stages of the different types we have in our data.</p>
+<pre><code>## # A tibble: 3 x 2
+##   Type       ntype
+##   &lt;chr&gt;      &lt;int&gt;
+## 1 Flat        1187
+## 2 Mountain     757
+## 3 Time trial   292</code></pre>
+<p>Clearly, we have most Flat stages, then Mountain stages and Time Trials are the least common. This is pretty much as expected.</p>
+<p>Now that we have explored the different stage types, we will look which riders have won the most stages in the respective types of stages.</p>
+</div>
+<div id="who-are-the-kings-of-the-different-types-of-stage" class="section level2">
+<h2>Who are the kings of the different types of stage?</h2>
+<p>The plot below display the number of stage wins seperate by the type of the stage.</p>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Cavendish is the king of the mass sprint, Merckx is the king of the mountain and Hinault is the king of the time trial.</p>
+<p>TDF visits a lot of different cities each year both in France and some in surrouding countries. We want to know if there are some cities that TDF visits more often than others.</p>
+</div>
+<div id="what-are-the-most-visited-cities" class="section level2">
+<h2>What are the most visited cities?</h2>
+<p>The chart below displays the top 20 most visited cities.</p>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Unsuprisingly Paris is the most visited city since it is visited at large stage each year, however, the famous capital is rather closely followed by Bordeaux. Pau is also offently visited, which makes sense since Pau is known as the gateway to the Pyrenees.</p>
+<p>Okay, now we have seen that there definitely is some cities that are more popular than others. Is the dependent on the type of stage?</p>
+</div>
+<div id="are-thery-any-cities-for-flat-stages-mountain-stages-etc." class="section level2">
+<h2>Are thery any cities for flat stages?, mountain stages? etc.</h2>
+<p>The charts below display the top 10 most visited cities for different types of stages.</p>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Paris is the most visited city for flat stages, Luchon and Pau (again) are the most visited mountain stage cities. Bourdeaux and Paris are the most visited time trial cities. In fear of stating the obvious, it makes good sense that the top 10 mountain stage cities are different from the top 10 flat stage cities, since they need to be near mountains.</p>
+<p>So, which cities are the most visited depends on the type of stage. Can we find the same pattern for the distribution of the distance of the stages?</p>
+</div>
+<div id="does-the-distribution-of-stages-distances-changes-for-different-stage-types" class="section level2">
+<h2>Does the distribution of stages distances changes for different stage types?</h2>
+<p>The plot below displays the densities, i.e. the area under the curve is 1, for the distribution of stages distances for different types of stages.</p>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>The plot shows that most time trials are between 0-100 km, with some long distance outliers. The distribution of flat and mountain stages are similar with a mean distance of around 200 km, however there are more long flat stages than long mountain stages. This may because there where some very long flat stages in the beginning of the TDF history.</p>
+<p>This is a static picture, could we imagine that these distributions would change over time?</p>
+</div>
+<div id="how-has-the-number-of-stages-changed-through-time" class="section level2">
+<h2>How has the number of stages changed through time?</h2>
+<p>The plots below show how the number of stages has changed through the years, along with the average distance of the stages.</p>
+<p><img src="/post/2018-10-02-the-beautiful-tour_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>As seen from the plots above, the number of stages increases through the years and flattens out. Notice the WWs.</p>
+<p>In the beginning of TDF there were few very long stages. Now we have shorter and more stages.</p>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>Hurra! Now we have answered all of the questions.</p>
+<p>We have seen that France is the most winning country, and that Eddy Merckx is a true champ, while Cavendish is the king of the mass sprint. We have seen that Paris is a very popular city, while Pau is the gate to the Pyrenees.</p>
+<p>We have seen that Time trials are short and that Mountain and Flat stages have similar length.</p>
+<p>At last, we have seen how the number of stages have increased through the years, and the average distance has dropped.</p>
+</div>

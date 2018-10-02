@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Eda on The D Word</title>
+    <link>/tags/eda/</link>
+    <description>Recent content in Eda on The D Word</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 02 Oct 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/eda/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>The Beautiful Tour</title>
+      <link>/2018/10/the-beautiful-tour/</link>
+      <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/the-beautiful-tour/</guid>
+      <description>Introduction In this project we are going to explore the infamous bicycling race Tour De France! First we will take look at the dataset, and then we are going to try to answer some of the following questions.
+ What is the most winning country? Who is the most winning rider? How many different type of stages do we have, and how frequent are they? Who are the kings of the different types of stage?</description>
+    </item>
+    
+  </channel>
+</rss>
