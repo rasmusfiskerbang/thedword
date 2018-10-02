@@ -12,7 +12,7 @@
 # For developpers, if you modify this theme, put your images in `source/images` folder and
 # use grunt task `build` to synchronize assets
 
-baseURL = "https://stoic-swirles-da950d.netlify.com/"
+baseURL = "https://thedword.netlify.com/"
 languageCode = "en-us"
 defaultContentLanguage = "en-us"
 title = "The D Word"
