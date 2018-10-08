@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>R on The D Word</title>
-    <link>/categories/r/</link>
+    <link>https://thedword.rbind.io/categories/r/</link>
     <description>Recent content in R on The D Word</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 02 Oct 2018 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://thedword.rbind.io/categories/r/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>The Beautiful Tour</title>
-      <link>/2018/10/the-beautiful-tour/</link>
+      <link>https://thedword.rbind.io/2018/10/the-beautiful-tour/</link>
       <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
       
-      <guid>/2018/10/the-beautiful-tour/</guid>
+      <guid>https://thedword.rbind.io/2018/10/the-beautiful-tour/</guid>
       <description>Introduction In this project we are going to explore the infamous bicycling race Tour De France! First we will take look at the dataset, and then we are going to try to answer some of the following questions.
  What is the most winning country? Who is the most winning rider? How many different type of stages do we have, and how frequent are they? Who are the kings of the different types of stage?</description>
     </item>

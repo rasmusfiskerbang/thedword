@@ -2,30 +2,30 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on The D Word</title>
-    <link>/tags/</link>
+    <link>https://thedword.rbind.io/tags/</link>
     <description>Recent content in Tags on The D Word</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 02 Oct 2018 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://thedword.rbind.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Eda</title>
-      <link>/tags/eda/</link>
+      <link>https://thedword.rbind.io/tags/eda/</link>
       <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
       
-      <guid>/tags/eda/</guid>
+      <guid>https://thedword.rbind.io/tags/eda/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Visualization</title>
-      <link>/tags/visualization/</link>
+      <link>https://thedword.rbind.io/tags/visualization/</link>
       <pubDate>Tue, 02 Oct 2018 00:00:00 +0000</pubDate>
       
-      <guid>/tags/visualization/</guid>
+      <guid>https://thedword.rbind.io/tags/visualization/</guid>
       <description></description>
     </item>
     

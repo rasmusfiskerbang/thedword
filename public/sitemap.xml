@@ -3,52 +3,52 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/2018/10/the-beautiful-tour/</loc>
+    <loc>https://thedword.rbind.io/2018/10/the-beautiful-tour/</loc>
     <lastmod>2018-10-02T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/archives/</loc>
+    <loc>https://thedword.rbind.io/archives/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/</loc>
+    <loc>https://thedword.rbind.io/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/eda/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/</loc>
+    <loc>https://thedword.rbind.io/tags/eda/</loc>
     <lastmod>2018-10-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/r/</loc>
+    <loc>https://thedword.rbind.io/post/</loc>
     <lastmod>2018-10-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/</loc>
+    <loc>https://thedword.rbind.io/categories/r/</loc>
     <lastmod>2018-10-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/</loc>
+    <loc>https://thedword.rbind.io/tags/</loc>
     <lastmod>2018-10-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/visualization/</loc>
+    <loc>https://thedword.rbind.io/</loc>
+    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://thedword.rbind.io/tags/visualization/</loc>
     <lastmod>2018-10-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
