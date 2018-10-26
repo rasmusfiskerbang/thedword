@@ -1,7 +1,7 @@
 ---
 title: The Beautiful Tour
 author: Rasmus Fisker Bang
-date: '2018-10-02'
+date: '2018-07-29'
 slug: the-beautiful-tour
 categories:
   - R

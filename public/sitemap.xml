@@ -3,53 +3,63 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://thedword.rbind.io/2018/10/the-beautiful-tour/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/2018/07/the-beautiful-tour/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/archives/</loc>
+    <loc>/2018/07/the-beautiful-tour/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2018/07/the-beautiful-tour/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/archives/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/categories/</loc>
+    <loc>/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/tags/eda/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/tags/eda/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/post/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/post/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/categories/r/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/categories/r/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/tags/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/tags/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://thedword.rbind.io/tags/visualization/</loc>
-    <lastmod>2018-10-02T00:00:00+00:00</lastmod>
+    <loc>/tags/visualization/</loc>
+    <lastmod>2018-07-29T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
