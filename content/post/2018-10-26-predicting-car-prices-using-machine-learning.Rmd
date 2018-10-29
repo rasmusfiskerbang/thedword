@@ -481,3 +481,182 @@ rm(list = c("p1","p2"))
 From the plot above it is evident that the optimal value of `s` is actually 0. This implies that it is optimal not to penalize the coefficients at all. When `s` is zero ridge, lasso and linear regression are equivalent. All this work for nothing.
 
 Perhaps we should try to look at some non-linear methods instead, in order to improve our accuracy.
+
+### Support Vector Regression
+
+Another popular machine learning method is the support vector machine. The code below sets up the model, trains and predicts in the usual fashion.
+
+```{r}
+svr                       <- list()
+svr$learner               <- makeLearner("regr.ksvm", kernel = "rbfdot")
+svr$fit                   <- train(learner = svr$learner, 
+                                   task = regression_task, 
+                                   subset = train)
+svr$prediction            <- predict(svr$fit, 
+                                     task = regression_task, 
+                                     subset = !train)
+```
+
+Let's see how well we did.
+
+```{r echo=FALSE}
+svr$prediction$data[,2:3] <- exp(svr$prediction$data[,2:3])
+svr$performance <- performance(svr$prediction, measures = reg_measures)
+svr$performance %>% matrix(ncol = length(.), dimnames = list(NULL, names(.))) %>% 
+  kable(caption = "Support Vector Regression Performance") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+That is good! We just cut about 1.000\$ of the average error, and now the average prediction error is down to 8%. Let's see whether we can tune some parameters and do even better.
+
+```{r warning=FALSE, message=FALSE}
+svr$cv <- makeResampleDesc("CV", iters = 3)
+svr$ps <- makeParamSet(makeNumericParam("C", lower = 1, upper = 100),
+                       makeNumericParam("sigma", lower = -2, upper = -1, 
+                                        trafo = function(x) 10^x))
+svr$tc <- makeTuneControlGrid(resolution = 6)
+svr$tr <- tuneParams(learner = svr$learner, task = regression_task_train,
+                     resampling = svr$cv, measures = mse, par.set = svr$ps,
+                     control = svr$tc, show.info = FALSE)
+```
+
+The `C` parameter is the cost of constraint violation and `sigma` is the inverse kernel width. The plot below shows the combination of `C` and `sigma` that results in the lowest test MSE. 
+
+```{r echo=FALSE}
+
+svr$tr$opt.path$env$path %>% 
+  mutate(sigma = 10^sigma, 
+         min_c = C[which.min(mse.test.mean)],
+         min_sigma = sigma[which.min(mse.test.mean)],
+         coord_min = str_c("Lowest values are:\n",
+                           str_c(min_sigma,min_c,round(min(mse.test.mean),2), sep = ","))) %>%
+  ggplot(aes(x = sigma, y = C)) +
+  geom_tile(aes(fill = mse.test.mean)) + 
+  geom_point(aes(x = min_sigma, y = min_c, color = coord_min), size = 3) +
+  scale_color_manual(name = "", values = "red") +
+  scale_fill_continuous(name = "Test MSE") +
+  labs(title = "Test MSE for different combinations of sigma and C") +
+  scale_x_log10()
+  
+
+```
+
+
+From the plot above we can see that a lower sigma results in lower test MSE. Now that we have tuned the hyperparameters using cross-validation, we can try to train and predict one more time with the new parameter values.
+
+```{r}
+
+svr$learner    <- setHyperPars(svr$learner, par.vals = svr$tr$x)
+svr$fit        <- train(learner = svr$learner, 
+                        task = regression_task, 
+                        subset = train)
+svr$prediction <- predict(svr$fit, task = regression_task, subset = !train)
+
+```
+
+Let's see how well we did with our tuned hyperparameters.
+
+```{r echo=FALSE}
+svr$prediction$data[,2:3] <- exp(svr$prediction$data[,2:3])
+svr$performance <- performance(svr$prediction, measures = reg_measures)
+svr$performance %>% matrix(ncol = length(.), dimnames = list(NULL, names(.))) %>% 
+  kable(caption = "Support Vector Regression Performance") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+We have managed to lower our average error with over 200\$ and we are down to making a 7.3% error on average.
+
+Perhaps we can do even better?
+
+### Random Forrest
+
+Now we will try use the powerful random forest algorithm instead. The model is setup in a very similar way to before.
+
+```{r}
+rf                       <- list()
+rf$learner               <- makeLearner("regr.randomForest")
+rf$fit                   <- train(learner = rf$learner, 
+                                  task = regression_task, 
+                                  subset = train)
+rf$prediction            <- predict(rf$fit, task = regression_task, subset = !train)
+rf$prediction$data[,2:3] <- exp(rf$prediction$data[,2:3])
+```
+
+We will not tune any hyperparameters, since my experience is that it didn't help much in this particular example. Alright, let's see how the "out of the box" random forest model performed
+
+```{r echo=FALSE}
+rf$performance <- performance(rf$prediction, measures = reg_measures)
+rf$performance %>% matrix(ncol = length(.), dimnames = list(NULL, names(.))) %>% 
+  kable(caption = "Random Forest Regression Performance") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+
+```
+
+It performs much better than the linear regression, however, it is a bit worse compared to the support vector regression. On average we are wrong 7.4%, and on average we predict 2.650\$ wrong.
+
+### XGBoost
+
+XGBoost, extreme gradient boosting, is another tree based method which is extremely popular and powerful. Let's set it up.
+
+```{r message=FALSE, warning=FALSE}
+xgb                       <- list()
+xgb$learner               <- makeLearner("regr.xgboost", nrounds = 200)
+xgb$fit                   <- train(learner = xgb$learner, 
+                                   task = regression_task_train)
+xgb$prediction            <- predict(xgb$fit, task = regression_task_test)
+```
+
+Let's see how it does right out of the box.
+
+```{r echo=FALSE}
+xgb$prediction$data[,2:3] <- exp(xgb$prediction$data[,2:3])
+xgb$performance <- performance(xgb$prediction, measures = reg_measures)
+xgb$performance %>% matrix(ncol = length(.), dimnames = list(NULL, names(.))) %>% 
+  kable(caption = "XGBoost Regression Performance") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+Impressive. Even better than random forest and support vector regression. Now we are predicting 2.550\$ wrong on average, and on average we are 7.1% wrong. 
+
+Perhaps we could try to combine our models in some way?
+
+### Ensembles
+
+One could imagine that our three top models make different errors, and by combining we could perhaps average out these errors. Let's try to do that.
+
+```{r}
+base_learner     <- list(svr$learner, rf$learner, xgb$learner)
+ensemble         <- list()
+ensemble$learner <- makeStackedLearner(base_learner, super.learner = "regr.lm", 
+                                       method = "stack.cv", 
+                                       predict.type = "response")
+```
+
+As seen above, this is easily done using the `makeStackedLearner()` function. Now we will train and predict.
+
+```{r warning=FALSE}
+ensemble$fit <- train(ensemble$learner, regression_task_train)
+ensemble$prediction <- predict(ensemble$fit, regression_task_test)
+```
+
+Let's see how well this averaging method did.
+
+```{r echo=FALSE}
+ensemble$prediction$data[,2:3] <- exp(ensemble$prediction$data[,2:3])
+ensemble$performance <- performance(ensemble$prediction, measures = reg_measures)
+ensemble$performance %>% matrix(ncol = length(.), dimnames = list(NULL, names(.))) %>% 
+  kable(caption = "Ensemle Performance") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+This method provides a slight improvement of the XGBoost model. Now we are down to an average error of 2.518\$ and an average percentage error of 7%. Impressive!
+
+It is interesting how one can improve performance by averaging out errors from different models.
+
+## Conclusions
+
+In this post we have learned about the dataset [Car Features and MSRP](https://www.kaggle.com/CooperUnion/cardataset) from Kaggle. We have learned that Chevrolet has produced the most cars, that the Silverado 1500 has the most variations, that electric cars are the most fuel efficient and a lot of other things.
+
+Further, we have explored how machine learning methods can be used to predict car prices. We found that linear models cannot adequately explain the relationship between the car prices and it's many features. As an alternative model XGBoost emerged as the winner. However, we also showed that ensembling different models we could perform even better.
+
+I hope you have enjoyed this post. Download the dataset from Kaggle and make analysis of your own.
