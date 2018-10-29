@@ -1,0 +1,483 @@
+---
+title: Predicting car prices using Machine Learning
+author: Rasmus Fisker Bang
+date: '2018-10-26'
+slug: predicting-car-prices-using-machine-learning
+categories:
+  - R
+tags:
+  - Machine Learning
+  - EDA
+  - visualization
+  - Regression
+  - XGBoost
+  - Random Forest
+  - Support Vector Machines
+coverCaption: Photo by Matt Antonioli on Unsplash
+coverImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1540563388/matt-antonioli-547700-unsplash.jpg
+thumbnailImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1540563878/thumbnail_supercars.jpg
+thumbnailImagePosition: buttom
+autoThumbnailImage: no
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Loading packages
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(funModeling)
+library(ggalt)
+library(dummies)
+library(gridExtra)
+library(plotly)
+library(latex2exp)
+library(scales)
+library(mlr)
+library(parallelMap)
+
+# Setting ggplot theme
+theme_set(theme_bw())
+
+# Loading data
+cars <- read_csv("data/Supercars/data.csv")
+
+# Setting seed
+set.seed(1)
+```
+
+
+## Introduction
+
+In this project we are going to use the dataset [Car Features and MSRP](https://www.kaggle.com/CooperUnion/cardataset), which can be found on [Kaggle](https://www.kaggle.com/). As the name suggests the dataset contains features about different car models, along with a variable called [MSRP](https://en.wikipedia.org/wiki/List_price), short for manufacturer's suggested retail price. 
+
+We are going to make some exploratory data analysis, EDA, and we are going to try to predict the prices of the different car models using machine learning methods.
+
+First let's dive into the data with some EDA.
+
+## EDA
+
+Doing this EDA, we are going to try to get some insights about the data by answering the questions below:
+
+1. Which car company has produced the most cars?
+2. Which models have the most unique variations?
+3. Which models have been in production the longest?
+4. Which companies and models are the cleanest?
+5. What is the relation between how clean the cars are and Engine HP?
+6. What is the distribution of MSRP?
+7. Which variables seem to be related to the price?
+
+
+### Overlook of the data
+
+The data set consists of `r dim(cars)[1]` different car models with `r dim(cars)[2]` different features. Let's look at a six random observations to get a grip of the data.
+
+```{r echo=FALSE}
+
+cars[sample(nrow(cars),6),] %>% kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = TRUE) %>% scroll_box(width = "100%", height = "100%")
+
+```
+
+The variable names are pretty self-explanatory. A couple of note worthy observations, Popularity is mentions on twitter for the different manufactures, and MSRP is measured in US dollars. 
+
+### Question 1
+
+The plot below shows how many different car models the top 20 different manufacturers have produced
+
+```{r Question 1, echo=FALSE, warning=FALSE, message=FALSE}
+cars %>% count(Make, sort = TRUE) %>% top_n(20) %>% mutate(Make = reorder(Make, n)) %>%
+  ggplot(aes(x = Make, y = n, fill = n)) + geom_col() + coord_flip() +
+  labs(title = "Number of produced cars by company", x = "Company", y = "Count",
+       caption = "Kaggle: Car Features and MSRP")
+```
+
+
+Chevrolet has produced over 1000 different models through the time. Next comes Ford and Volkswagen. All of the top manufacturers are rather well known.
+
+### Question 2
+
+The plot below shows which car models have the most unique variations.
+
+```{r echo=FALSE, message=FALSE}
+
+cars %>% count(Model, Make, sort = TRUE) %>% top_n(20) %>% mutate(Model = reorder(Model, n)) %>%
+  ggplot(aes(x = Model, y = n, fill = Make)) + geom_col() + coord_flip() +
+  labs(title = "Number of produced cars by company", x = "Model", y = "Count",
+       caption = "Kaggle: Car Features and MSRP")
+
+```
+
+The Chevrolet Silverado 1500 has the most unique variations, with over 150 different variations. Next follows the Toyota Tundra and the Ford F-150. These models are produced substantially more than the other models. However, most of the others are also well known models.
+
+### Question 3
+
+The plot below shows which models have been in production the longest.
+
+```{r echo=FALSE}
+
+cars %>% group_by(Model,Make) %>% summarise(max_year = max(Year), min_year = min(Year),
+  Time_interval = max(Year)-min(Year)) %>% arrange(desc(Time_interval)) %>% ungroup() %>%
+  head(20) %>% mutate(Model = reorder(Model, Time_interval)) %>%
+  ggplot(aes(x = min_year, xend = max_year, y = Model, color = Make)) +
+  geom_dumbbell(size_x = 2, size_xend = 2, size = 0.4) +
+  geom_text(aes(label = Time_interval, x = min_year + Time_interval/2), size = 2.7, 
+            nudge_y = 0.3, show.legend = FALSE) +
+  guides(colour = guide_legend(override.aes = list(size=3))) + 
+  labs(title = "Production duration for different car models", 
+       x = "Year", caption = "Kaggle: Car Features and MSRP")
+
+```
+
+The Volvo S90 has been in production for 19 years, followed by Continental, NSX, IS 300 and Pacifica, which have all been in production for more than 10 years. The rest of the models have only been in production for 5 years or less.
+
+### Question 4
+
+We have two variables which indicate how clean a car is. Highway MPG and city mpg. We want to take an average of the measures to get one measure instead. Further, we want to measure fuel consumption in KPL instead of MPG. We can do that by multiplying by 0.354. 
+
+Before we begin, I know that there is a faulty observation which is not just an outlier. Take a look at this observation.
+
+```{r echo=FALSE}
+
+cars %>% filter(`highway MPG` > 300) %>% select("Make","Model","highway MPG","city mpg") %>%
+  kable() %>% kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                            full_width = FALSE)
+
+cars <- cars %>% filter(`highway MPG` < 300)
+
+```
+
+An Audi A6 with a highway MPG of 354 and a city MPG of 24. That does not make sense. Let's remove that observation. 
+
+The plot below displays the average KPL fuel consumption for different car models. The average is both taken with respect to the different variations of the car models, and between highway MPG and city MPG.
+
+```{r echo=FALSE}
+
+# Collapsing Engine Fuel Types
+cars$`Engine Fuel Type`[str_detect(cars$`Engine Fuel Type`,"flex-fuel")] <- "flex-fuel"
+cars$`Engine Fuel Type`[str_detect(cars$`Engine Fuel Type`,"premium unleaded")] <- "premium unleaded"
+
+A4 <- cars %>% mutate(avg_mpg = (`highway MPG`+`city mpg`/2)) %>%
+      select("Make","Model","Engine Fuel Type","highway MPG","city mpg","avg_mpg") %>%
+      group_by(Model,Make,`Engine Fuel Type`) %>% summarise(avg_mpg = mean(avg_mpg)) %>%
+      arrange(desc(avg_mpg)) %>% head(20) %>% ungroup() %>% mutate(kpl = avg_mpg*0.354) %>%
+      mutate(Model = reorder(Model, kpl))
+
+A4 %>% ggplot(aes(x = Model, y = kpl, fill = Make)) +
+  geom_bar(stat = "identity", aes()) + coord_flip() + 
+  labs(title = "Kilometer pr. liter", y = "Kilometer pr. liter",
+  caption = "Kaggle: Car Features and MSRP") +
+  geom_text(aes(label = `Engine Fuel Type`, y = kpl/2), size = 3.2, color = "white")
+
+```
+
+From the plot above it is evident that the cleanest model is the BMW i3, which is an electric car. It can run over 60 kilometers on 1 liter of fuel. In general, the top 13 cars are all electric, where the rest of the cars are hybrids.
+
+This plot is a bit weird, since electric cars don't use fuel. I'm not aware how they have made the conversion from power usage to MPG. Perhaps something like "how much fuel should have been used to produce that amount of electricity?".
+
+### Question 5
+
+The figure below is an interactive scatter plot showing the relation between KPL fuel consumption and Engine HP.
+Points are color coded based on their Engine Fuel Type.
+
+NB. Observations with a KPL larger than 40 and observations with Engine HP larger than 800 have been removed.
+
+```{r echo=FALSE, message=FALSE}
+
+p <- cars %>% mutate(kpl = (`highway MPG`+`city mpg`/2)*0.354,
+                      Model = str_c(Make,Model, sep = " ")) %>% 
+      filter(kpl < 40, `Engine HP` < 800) %>%
+      ggplot(aes(x = `Engine HP`, y = kpl, label = Model, text = Year)) +
+      geom_point(alpha = 0.25, aes(color = `Engine Fuel Type`)) + 
+      guides(colour = guide_legend(override.aes = list(alpha=1))) +
+      geom_smooth(aes(group = 1)) + labs(title = "Kilometers pr. liter vs. Engine HP",
+      y = "Kilometers pr. liter", caption = "Kaggle: Car Features and MSRP")
+
+ggplotly(p, tooltip = c("label","text"))
+
+```
+
+As seen in the plot above there is a negative non-linear negative relationship between KPL fuel consumption and Engine HP. This makes quite good sense, since we expect cars with more powerful engines to use more fuel.
+
+The observations can roughly be split into three sets.
+
+We have all the points in the bottom right corner, which are cars using premium gasoline. These cars use a lot of fuel and they have powerful engines. They also relatively new models. These are the supercars. An example is the Lamborghini Aventador from 2016, which is the point in the farthest right. Hover over it.
+
+Then we have all of the clean cars. These are the points in the top left. They have a small size and a small engine, and they are not that thirsty. Many of these are hybrids, and they are also relatively new. An example is the Toyota Prius from 2017 which is the observation in the very top.
+
+Then we have all of the cars you do not want to own. These are the points in the bottom left corner. They are old cars. They are not very powerful and they use a lot of fuel. An example is the Volkswagen Vanagon from 1990. Hopefully they are cheaper?
+
+That is what we are going to try to find out. The next couple of sections deal with the MSRP variable. It's distribution and it's relation to the features. These questions are important, since it is the MSRP variable that we are going to predict.
+
+### Question 6
+
+The plot below shows the distribution of MSRP and a corresponding box plot.
+
+```{r echo=FALSE}
+
+p1 <- cars %>% ggplot(aes(x = MSRP)) + geom_density(fill = "#AA3939") + 
+  labs(title = "Distribution of MSRP", y = "Density", caption = "Kaggle: Car Features and MSRP")
+p2 <- cars %>% ggplot(aes(x = factor(0), y = MSRP)) + geom_boxplot() +
+  labs(title = "Boxplot of MSRP", x = "", caption = "Kaggle: Car Features and MSRP")
+
+grid.arrange(p1,p2, ncol = 2)
+
+
+```
+
+As seen in the plot above the distribution of MSRP is heavily skewed. We have some extremely expensive cars, e.g. the Bugatti Veyron from 2008 with a MSRP of 2.065.902$. 
+
+Let's try to make a log transformation of MSRP and make the same plots to see whether that helps.
+
+```{r echo=FALSE}
+
+cars_ML <- cars
+cars_ML$MSRP <- log(cars_ML$MSRP)
+colnames(cars_ML)[16] <- "log_MSRP"
+
+p1 <- cars_ML %>% ggplot(aes(x = log_MSRP)) + geom_density(fill = "#AA3939") + 
+      labs(title = TeX("Distribution of $\\log(MSRP)$"), y = "Density", 
+           caption = "Kaggle: Car  Features and MSRP")
+p2 <- cars_ML %>% ggplot(aes(x = factor(0), y = log_MSRP)) + geom_boxplot(fill = "#AA3939") +
+      labs(title = TeX("Boxplot of $\\log(MSRP)$"), x = "", 
+           caption = "Kaggle: Car Features and MSRP")
+
+grid.arrange(p1,p2, ncol = 2)
+
+```
+
+The log transformation made it quite a bit better. However, we still have some outliers, and now they are in both tails of the distribution. 
+
+When doing machine learning we need to make a trade-off. Do we want model the majority of our data more precisely, for the price of not modelling extreme values that well, or do we want to also model extreme values and pay with less precision in the majority of our data? In this case we want to exclude the extremes and gain more precision on the majority of the data.
+
+To be more specific we want to exclude all cars which have a price outside 
+$$\left[q_{25\%}^{\log\left(MSRP\right)}-1.5*IQR_{\log\left(MSRP\right)};q_{75\%}^{\log\left(MSRP\right)}+1.5*IQR_{\log\left(MSRP\right)}\right]$$
+where $q_{25\%}^{\log\left(MSRP\right)}$ and $q_{75\%}^{\log\left(MSRP\right)}$ are the 25% and 75% quantiles of $\log(MSRP)$, respectively, and $IQR = q_{75\%}^{\log\left(MSRP\right)}-q_{25\%}^{\log\left(MSRP\right)}$. There are definitely more complicated methods for outlier detection out there, but this is quick and simple.
+
+After we have removed the outliers we get the following plot.
+
+```{r echo=FALSE}
+
+Q1 <- quantile(cars_ML$log_MSRP, 0.25)
+Q3 <- quantile(cars_ML$log_MSRP, 0.75)
+IQR <- Q3-Q1
+
+cars_ML <- cars_ML %>% filter(between(log_MSRP,Q1-1.5*IQR,Q3+1.5*IQR))
+
+p1 <- cars_ML %>% ggplot(aes(x = log_MSRP)) + geom_density(fill = "#AA3939") + 
+      labs(title = TeX("Distribution of $\\log(MSRP)$"), y = "Density", 
+           caption = "Kaggle: Car  Features and MSRP")
+p2 <- cars_ML %>% ggplot(aes(x = factor(0), y = log_MSRP)) + geom_boxplot(fill = "#AA3939") +
+      labs(title = TeX("Boxplot of $\\log(MSRP)$"), x = "", 
+           caption = "Kaggle: Car Features and MSRP")
+
+grid.arrange(p1,p2, ncol = 2)
+
+
+```
+
+Now we have removed most of the outliers and the data looks much more manageable.
+
+### Question 7
+
+Now we want to get a hold of how our numeric features are related to MSRP, or $\log(MSRP)$.
+The plot below shows a scatter plot displaying the relation between $\log(MSRP)$ and our other numeric variables.
+
+```{r echo=FALSE, warning=FALSE}
+
+cars_ML %>% select(which(sapply(cars_ML[1,], function(x) is.numeric(x))),-"Number of Doors") %>% 
+  gather(-log_MSRP, key = "var", value = "value") %>%
+  ggplot(aes(x = value, y = log_MSRP)) + geom_point(color = "#AA3939") +
+  facet_wrap(~ var, scales = "free") + 
+  labs(title = TeX("$\\log(MSRP)$ vs. different variables"),
+       x = "Value", y = TeX("$\\log(MSRP)$"),
+       caption = "Kaggle: Car Features and MSRP")
+
+```
+
+City MPG, highway MPG and Popularity does not seem to have a clear relation with MSRP. However, there seems to be a positive relationship between MSRP and Engine Cylinders, Engine HP and Year. That is, cars with larger engines are more expensive, and newer cars are more expensive as well. That makes sense.
+
+## Data health status
+
+Before we can begin to do machine learning, we need to check the health status of the dataset. This means we want to check for infinite values, missing values etc. We can do this by using the [funModeling](https://cran.r-project.org/web/packages/funModeling/index.html) package.
+
+The table below shows the health status of the dataset.
+
+```{r echo=FALSE}
+df_status(cars_ML, print_results = FALSE) %>% kable() %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+cars_ML <- cars_ML %>% drop_na()
+
+```
+
+From the table above we can see that we have 55 observations which have 0 Engine Cylinders, however, this is not a problem since this is simply the electric cars. 
+
+We don't want to have any missing values, because it prevents us from doing modelling. From the table we see that we have 68 missing observations in Engine HP and 30 for Engine Cylinders. We will simply remove these observations, since they only make up 0.7% and 0.31% of the whole dataset, respectively.
+
+We have no infinite values which is positive.
+
+## Feauture Engineering
+
+Before we can do machine learning, we want to convert the character features into numeric dummy variables. These variables include Make, Engine Fuel Type, Transmission type, Driven_Wheels, Market Category, Vehicle Size and Vehicle Style. 
+
+We will not use the Model variable since it simply contains to many unique values, and they will most likely not have much influence. So we will just remove that one.
+
+All of the categorical features, except Market Category, can only have one value per car model, hence they will be easy to convert to dummies using the [dummies](https://cran.r-project.org/web/packages/dummies/index.html) package.
+
+Market Category can contain multiple values for a single observation, for example
+
+```{r echo=FALSE}
+
+# Printing table
+cars_ML %>% head(5) %>% select(1,2,10) %>% kable() %>% 
+  kable_styling(bootstrap_options = c(c("striped", "hover", "condensed")), full_width = FALSE)
+
+# Splitting Market Category
+cars_ML$Market_Category_split <- cars_ML$`Market Category` %>% str_split(",")
+
+cars_ML <- cars_ML %>% unnest(Market_Category_split) %>% mutate(ID = row_number() ,count = 1) %>%
+  spread(key = Market_Category_split, value = count, fill = 0) %>% select(-ID)
+
+cars_ML <- cars_ML %>% group_by_at(vars(colnames(cars_ML)[1:16])) %>%
+  summarise_at(vars(colnames(cars_ML)[17:27]), funs(sum)) %>% ungroup() %>% 
+  select(-2,-10)
+
+# Creating dummies
+cars_ML <- dummy.data.frame(as.data.frame(cars_ML),
+                            names = colnames(cars_ML)[sapply(cars_ML, is.character)], 
+                            sep = " ")
+colnames(cars_ML) <- make.names(colnames(cars_ML))
+
+# Removing variables
+rm(list = setdiff(ls(),c("cars","cars_ML")))
+
+```
+
+Because of this we will need to split each observation by a "," and then create dummy variables, which indicate whether a given model is part of that market category. Now that we have done this, we have `r ncol(cars_ML)` different features.
+
+## Machine Learning
+
+When we are doing machine learning, we want to see how well we can predict observations that we have not seen before. In this case we want to see how well we can predict the prices of cars, for which we only observe some given attributes. 
+
+Because of this, I have chosen to leave out 25% of the data, and use that to test how well we can predict the car prices. The rest is used for model training.
+
+```{r}
+train_frac <- 0.75
+train      <- 1:nrow(cars_ML) %in% sample(nrow(cars_ML),ceiling(nrow(cars_ML)*train_frac))
+```
+
+A good package for a nice and unified machine learning workflow is [mlr](https://mlr-org.github.io/mlr/). 
+The clear advantage is that all the models we want to use are unified in one package instead of using several different ones. First we are going to set up a machine learning task, which in our case is regression.
+
+```{r}
+regression_task       <- makeRegrTask(data = as.data.frame(cars_ML), 
+                                      target = "log_MSRP")
+regression_task_train <- subsetTask(task = regression_task, subset = train)
+regression_task_test  <- subsetTask(task = regression_task, subset = !train)
+```
+
+The first line creates the task, and in the next two we create subset tasks, where we use the training data in the first and the test data in the second.
+
+Now we will train some different models, look at their predictions and see how they compare in performance. We are going to start simple, and then slowly climb of the complexity ladder.
+
+### Linear regression
+
+The first model we are going to use is the linear regression.
+
+```{r message=FALSE, warning=FALSE}
+linear            <- list()
+linear$learner    <- makeLearner("regr.lm")
+linear$fit        <- train(learner = linear$learner, 
+                           task = regression_task, 
+                           subset = train)
+linear$prediction <- predict(object = linear$fit, 
+                             task = regression_task, 
+                             subset = !train)
+```
+
+The first line just creates an empty list to store the objects related to the linear regression. The next line creates a "learner", which a basically the machine learning method that we want to use. Then we train the model, and afterwards we make a prediction.
+
+We want to see how well our model did, however, since we have transformed $MSRP$ to $\log(MSRP)$ we will need to take the exponential of our prediction to get the data in the right units. The line below does just that.
+
+```{r}
+linear$prediction$data[,2:3] <- exp(linear$prediction$data[,2:3])
+```
+
+mlr has some built-in performance measures that we will use, they are listed below.
+
+```{r}
+reg_measures <- list(rmse, mae, medae, mape)
+```
+
+The we can simply use the `performance()` function with the measures we have just defined. Let's see how well we did.
+
+```{r echo=FALSE}
+linear$performance <- performance(linear$prediction, measures = reg_measures)
+linear$performance %>% matrix(ncol = length(.), dimnames = list(NULL, names(.))) %>% 
+  kable(caption = "Linear Regression Performance") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+Auch! On average we are about 10.5% wrong. We predict about 3.800\$ wrong on average. The fact that $rmse>mae>medae$ suggests that we have some very expensive cars where we are underestimating their prices. 
+
+Let's see whether we can do better, shall we!
+
+### Shrinkage Methods
+
+We have `r ncol(cars_ML)` different features and all of them were used in the linear regression. Perhaps not all of them are equally important. We could try to make the coefficients for some of the features smaller, or simply removing some of them. For that we can use shrinkage methods, more specifically, ridge and lasso.
+
+The workflow is almost the same as before, however, this time we have a hyperparameter that we need to find a value for. We will do that using cross-validation, which is also an integral part of the mlr package. The parameter is `s` and it controls how hard we penalize the weights.
+
+Let's setup our new models
+
+```{r message=FALSE}
+# Ridge
+ridge <- list()
+ridge$learner <- makeLearner("regr.glmnet", alpha = 0)
+
+# lasso
+lasso <- list()
+lasso$learner <- makeLearner("regr.glmnet", alpha = 1)
+```
+
+As seen from the code above, the setup is done exactly as before, however, before we can train and predict, we will need to find the optimal `s` using cross-validation.
+
+```{r}
+# Ridge
+ridge$cv <- makeResampleDesc("CV", iters = 5)
+ridge$ps <- makeParamSet(makeNumericParam("s", lower = 0, upper = 0.1))
+ridge$tc <- makeTuneControlGrid(resolution = 11)
+ridge$tr <- tuneParams(learner = ridge$learner, task = regression_task_train,
+                       resampling = ridge$cv, measures = mse, par.set = ridge$ps,
+                       control = ridge$tc, show.info = FALSE)
+
+# Lasso
+lasso$cv <- makeResampleDesc("CV", iters = 5)
+lasso$ps <- makeParamSet(makeNumericParam("s", lower = 0, upper = 0.1))
+lasso$tc <- makeTuneControlGrid(resolution = 11)
+lasso$tr <- tuneParams(learner = lasso$learner, task = regression_task_train,
+                       resampling = lasso$cv, measures = mse, par.set = lasso$ps,
+                       control = lasso$tc, show.info = FALSE)
+```
+
+The first line makes a resampler, in this case a 5-fold cross-validation. Then we write which parameter we are interested in, and what ranges should be used. Next we make grid of the values and then we run the cross-validation. 
+
+The figures below show the test MSE for the different values of `s` obtained through cross-validation for both ridge and lasso.
+
+```{r echo=FALSE}
+ridge$opt_path_plot <- renderOptPathPlot(ridge$tr$opt.path, iter = 11)
+lasso$opt_path_plot <- renderOptPathPlot(lasso$tr$opt.path, iter = 11)
+
+p1 <- ridge$opt_path_plot$plot.x + labs(title = "Optimal s for ridge", y = "Test MSE")
+p2 <- lasso$opt_path_plot$plot.x + labs(title = "Optimal s for lasso", y = "Test MSE")
+grid.arrange(p1,p2,ncol = 2)
+rm(list = c("p1","p2"))
+
+```
+
+From the plot above it is evident that the optimal value of `s` is actually 0. This implies that it is optimal not to penalize the coefficients at all. When `s` is zero ridge, lasso and linear regression are equivalent. All this work for nothing.
+
+Perhaps we should try to look at some non-linear methods instead, in order to improve our accuracy.

@@ -6,10 +6,20 @@
     <description>Recent content in R on The D Word</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 29 Jul 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 26 Oct 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Predicting car prices using Machine Learning</title>
+      <link>/2018/10/predicting-car-prices-using-machine-learning/</link>
+      <pubDate>Fri, 26 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/2018/10/predicting-car-prices-using-machine-learning/</guid>
+      <description>Introduction In this project we are going to use the dataset Car Features and MSRP, which can be found on Kaggle. As the name suggests the dataset contains features about different car models, along with a variable called MSRP, short for manufacturer’s suggested retail price.
+We are going to make some exploratory data analysis, EDA, and we are going to try to predict the prices of the different car models using machine learning methods.</description>
+    </item>
     
     <item>
       <title>The Beautiful Tour</title>
