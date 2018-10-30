@@ -3,6 +3,7 @@ title: Predicting car prices using Machine Learning
 author: Rasmus Fisker Bang
 date: '2018-10-26'
 slug: predicting-car-prices-using-machine-learning
+twImage: "https://res.cloudinary.com/dtz4kneoh/image/upload/v1540888388/matt-antonioli-547700-unsplash-c_scale_w_3000.jpg" 
 categories:
   - R
 tags:
