@@ -17,7 +17,7 @@ coverCaption: Photo by Matt Antonioli on Unsplash
 coverImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1540888388/matt-antonioli-547700-unsplash-c_scale_w_3000.jpg
 thumbnailImage: https://res.cloudinary.com/dtz4kneoh/image/upload/v1540563878/thumbnail_supercars.jpg
 thumbnailImagePosition: buttom
-autoThumbnailImage: yes
+autoThumbnailImage: no
 ---
 
 ```{r setup, include=FALSE, message=FALSE}
