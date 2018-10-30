@@ -39,8 +39,6 @@
   {{ end }}
 {{ end }}
 
-<meta name="twitter:image" content="{{ .Params.image }}" />
-
 <meta name="twitter:card" content="summary">
 {{ with .Site.Author.twitter }}
   <meta name="twitter:site" content="@{{ . }}">
@@ -68,9 +66,4 @@
   <meta property="og:image" content="{{ . | absURL }}">
   <meta property="twitter:image" content="{{ . | absURL }}">
 {{ end }}
-{{ with .Params.gallery }}
-  {{ range . }}
-    <meta property="og:image" content="{{ range first 1 (split . " ") }}{{ . | absURL }}{{ end }}">
-    <meta property="twitter:image" content="{{ range first 1 (split . " ") }}{{ . | absURL }}{{ end }}">
-  {{ end }}
-{{ end }}
+
