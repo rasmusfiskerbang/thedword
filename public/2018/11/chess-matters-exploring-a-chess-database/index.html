@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Hugo 0.49.1 with theme Tranquilpeak 0.4.3-SNAPSHOT">
+<meta name="author" content="Rasmus Fisker Bang">
+<meta name="keywords" content=", Data Science, Data Science Portfolio, Visualization, Machine Learning, R">
+<meta name="description" content="Introduction In this post I am going to explore some chess data. The data is obtained from a free online chess database. In addition, I have scraped chess openings from FICGS and matched them to the first moves from each game from the chess DB.
+Originally the chess DB contained about 3.5 million games, which took up about 2.5 GB. After I removed missing values, incomplete columns etc., I now have about 860000 games, which is much more manageable.">
+
+
+<meta property="og:description" content="Introduction In this post I am going to explore some chess data. The data is obtained from a free online chess database. In addition, I have scraped chess openings from FICGS and matched them to the first moves from each game from the chess DB.
+Originally the chess DB contained about 3.5 million games, which took up about 2.5 GB. After I removed missing values, incomplete columns etc., I now have about 860000 games, which is much more manageable.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Chess Matters - Exploring a chess database">
+<meta name="twitter:title" content="Chess Matters - Exploring a chess database">
+<meta property="og:url" content="/2018/11/chess-matters-exploring-a-chess-database/">
+<meta property="twitter:url" content="/2018/11/chess-matters-exploring-a-chess-database/">
+<meta property="og:site_name" content="The D Word">
+<meta property="og:description" content="Introduction In this post I am going to explore some chess data. The data is obtained from a free online chess database. In addition, I have scraped chess openings from FICGS and matched them to the first moves from each game from the chess DB.
+Originally the chess DB contained about 3.5 million games, which took up about 2.5 GB. After I removed missing values, incomplete columns etc., I now have about 860000 games, which is much more manageable.">
+<meta name="twitter:description" content="Introduction In this post I am going to explore some chess data. The data is obtained from a free online chess database. In addition, I have scraped chess openings from FICGS and matched them to the first moves from each game from the chess DB.
+Originally the chess DB contained about 3.5 million games, which took up about 2.5 GB. After I removed missing values, incomplete columns etc., I now have about 860000 games, which is much more manageable.">
+<meta property="og:locale" content="en-us">
+
+  
+    <meta property="article:published_time" content="2018-11-28T00:00:00">
+  
+  
+    <meta property="article:modified_time" content="2018-11-28T00:00:00">
+  
+  
+  
+    
+      <meta property="article:section" content="R">
+    
+  
+  
+    
+      <meta property="article:tag" content="EDA">
+    
+      <meta property="article:tag" content="visualization">
+    
+      <meta property="article:tag" content="Shiny">
+    
+      <meta property="article:tag" content="D3.js">
+    
+      <meta property="article:tag" content="Network">
+    
+      <meta property="article:tag" content="Graph">
+    
+  
+
+
+<meta name="twitter:card" content="summary">
+
+  <meta name="twitter:site" content="@FiskerBang">
+
+
+  <meta name="twitter:creator" content="@FiskerBang">
+
+
+
+
+
+
+  <meta property="og:image" content="https://res.cloudinary.com/dtz4kneoh/image/upload/v1543438461/michal-parzuchowski-227671-unsplash_thumbnail.jpg">
+  <meta property="twitter:image" content="https://res.cloudinary.com/dtz4kneoh/image/upload/v1543438461/michal-parzuchowski-227671-unsplash_thumbnail.jpg">
+
+
+  <meta property="og:image" content="https://res.cloudinary.com/dtz4kneoh/image/upload/v1543438365/michal-parzuchowski-227671-unsplash.jpg">
+  <meta property="twitter:image" content="https://res.cloudinary.com/dtz4kneoh/image/upload/v1543438365/michal-parzuchowski-227671-unsplash.jpg">
+
+
+
+    <title>Chess Matters - Exploring a chess database</title>
+
+    <link rel="icon" href="https://res.cloudinary.com/dtz4kneoh/image/upload/v1538509660/mstile-310x310.png">
+    
+
+    
+
+    <link rel="canonical" href="/2018/11/chess-matters-exploring-a-chess-database/">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/jquery.fancybox.min.css" integrity="sha256-vuXZ9LGmmwtjqFX1F+EKin1ThZMub58gKULUyf0qECk=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.4/helpers/jquery.fancybox-thumbs.min.css" integrity="sha256-SEa4XYAHihTcEP1f5gARTB2K26Uk8PsndQYHQC1f4jU=" crossorigin="anonymous" />
+    
+    
+    <link rel="stylesheet" href="/css/style-nnm2spxvve8onlujjlegkkytaehyadd4ksxc1hyzzq9a2wvtrgbljqyulomn.min.css" />
+    
+    
+
+    
+      
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-128291655-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+    
+    
+  </head>
+
+  <body>
+    <div id="blog">
+      <header id="header" data-behavior="5">
+  <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+  <div class="header-title">
+    <a class="header-title-link" href="/">The D Word</a>
+  </div>
+  
+    
+      <a class="header-right-picture "
+         href="/#about">
+    
+    
+    
+      
+        <img class="header-picture" src="https://res.cloudinary.com/dtz4kneoh/image/upload/v1538336360/bio-pic.jpg" alt="Author&#39;s picture" />
+      
+    
+    </a>
+  
+</header>
+
+      <nav id="sidebar" data-behavior="5">
+  <div class="sidebar-container">
+    
+      <div class="sidebar-profile">
+        <a href="/#about">
+          <img class="sidebar-profile-picture" src="https://res.cloudinary.com/dtz4kneoh/image/upload/v1538336360/bio-pic.jpg" alt="Author&#39;s picture" />
+        </a>
+        <h4 class="sidebar-profile-name">Rasmus Fisker Bang</h4>
+        
+          <h5 class="sidebar-profile-bio">Economist who loves making insights from data</h5>
+        
+      </div>
+    
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-home"></i>
+      
+      <span class="sidebar-button-desc">Home</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="/categories">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-bookmark"></i>
+      
+      <span class="sidebar-button-desc">Categories</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="/tags">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-tags"></i>
+      
+      <span class="sidebar-button-desc">Tags</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="/archives">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-archive"></i>
+      
+      <span class="sidebar-button-desc">Archives</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="/#about">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-question"></i>
+      
+      <span class="sidebar-button-desc">About</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://www.linkedin.com/in/rasmusfiskerbang/">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-linkedin"></i>
+      
+      <span class="sidebar-button-desc">LinkedIn</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://github.com/rasmusfiskerbang">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-github"></i>
+      
+      <span class="sidebar-button-desc">GitHub</span>
+    </a>
+  </li>
+
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="https://www.facebook.com/rasmusfiskerbang">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-facebook"></i>
+      
+      <span class="sidebar-button-desc">Facebook</span>
+    </a>
+  </li>
+
+
+    </ul>
+    <ul class="sidebar-buttons">
+      
+  <li class="sidebar-button">
+    
+      <a class="sidebar-button-link " href="/index.xml">
+    
+      <i class="sidebar-button-icon fa fa-lg fa-rss"></i>
+      
+      <span class="sidebar-button-desc">RSS</span>
+    </a>
+  </li>
+
+
+    </ul>
+  </div>
+</nav>
+
+      
+  <div class="post-header-cover
+              text-left
+              "
+       style="background-image:url('https://res.cloudinary.com/dtz4kneoh/image/upload/v1543438365/michal-parzuchowski-227671-unsplash.jpg')"
+       data-behavior="5">
+    
+      <div class="post-header main-content-wrap text-left">
+  
+    <h1 class="post-title" itemprop="headline">
+      Chess Matters - Exploring a chess database
+    </h1>
+  
+  
+  <div class="postShorten-meta post-meta">
+    
+      <time itemprop="datePublished" datetime="2018-11-28T00:00:00Z">
+        
+  November 28, 2018
+
+      </time>
+    
+    
+  
+  
+    <span>in</span>
+    
+      <a class="category-link" href="/categories/r">R</a>
+    
+  
+
+  </div>
+
+</div>
+    
+  </div>
+
+
+      <div id="main" data-behavior="5"
+        class="hasCover
+               hasCoverMetaIn
+               hasCoverCaption">
+        <article class="post" itemscope itemType="http://schema.org/BlogPosting">
+          
+            <span class="post-header-cover-caption caption">Photo by Michał Parzuchowski on Unsplash</span>
+          
+          
+          <div class="post-content markdown" itemprop="articleBody">
+            <div class="main-content-wrap">
+              <script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>In this post I am going to explore some chess data. The data is obtained from
+<a href="http://chessdb.sourceforge.net/">a free online chess database</a>. In addition, I have scraped chess openings from <a href="http://www.ficgs.com/directory_openings.html">FICGS</a> and matched them to the first moves from each game from the <a href="http://chessdb.sourceforge.net/">chess DB</a>.</p>
+<p>Originally the <a href="http://chessdb.sourceforge.net/">chess DB</a> contained about 3.5 million games, which took up about 2.5 GB. After I removed missing values, incomplete columns etc., I now have about 860000 games, which is much more manageable.</p>
+<p>Let’s take a look at a random game.</p>
+<table class="table table-striped table-hover table-condensed" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+date
+</th>
+<th style="text-align:left;">
+result
+</th>
+<th style="text-align:right;">
+white_rating
+</th>
+<th style="text-align:right;">
+black_rating
+</th>
+<th style="text-align:right;">
+total_moves
+</th>
+<th style="text-align:left;">
+moves
+</th>
+<th style="text-align:left;">
+opening
+</th>
+<th style="text-align:left;">
+opening_group
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+2002-03-24
+</td>
+<td style="text-align:left;">
+1-0
+</td>
+<td style="text-align:right;">
+2299
+</td>
+<td style="text-align:right;">
+2320
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:left;">
+<ol style="list-style-type: decimal">
+<li>d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 Na6 7. O-O e5 8. d5 Nc5 9. Nd2 a5 10. f3 Nh5 11. Nb3 Nxb3 12. axb3 Bd7 13. Be3 Nf4 14. Qd2 f5 15. c5 dxc5 16. Bc4 b6 17. Rae1 Re8 18. Bxf4 exf4 19. Qxf4 Be5 20. Qd2 Kh8 21. f4 Bd4+ 22. Kh1 fxe4 23. Nxe4 Bf5 24. Nc3 Bd7 25. Rxe8+ Qxe8 26. Re1 Qf8 27. Bb5 Rd8 28. h3 Qg7 29. Bc4 Be8 30. Qe2 Bxc3 31. Qxe8+
+</td>
+<td style="text-align:left;">
+King’s Indian : Kazakh variation
+</td>
+<td style="text-align:left;">
+King’s Indian
+</td>
+</tr>
+</tbody>
+</table></li>
+</ol>
+<p>We have a date variable, a result variable, e.g. black wins as here, then we have <a href="https://en.wikipedia.org/wiki/Elo_rating_system">ELO</a> ratings for white and black, the total number of moves in the game, the actual moves, the name of the opening and the name of the opening group which the opening belongs to.</p>
+<p>There are lots of interesting questions that could be asked!</p>
+</div>
+<div id="questions" class="section level2">
+<h2>Questions</h2>
+<p>Below we have a list of questions that we want to ask:</p>
+<ol style="list-style-type: decimal">
+<li>How does the number of games evolve over time?</li>
+<li>What is the composition of results?</li>
+<li>What is the distribution of white and black’s ratings, and the distribution of the difference between the ratings?</li>
+<li>What opening groups are the most common?</li>
+<li>How does the most common opening groups change with level of the players?</li>
+<li>What are the most popular move sequences for different opening groups?</li>
+</ol>
+<div id="how-does-the-number-of-games-evolve-over-time" class="section level3">
+<h3>How does the number of games evolve over time?</h3>
+<p>The plot below shows the number of games per month through time.</p>
+<p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>There seems to be an upward trend of games until 2005 and then it goes down. This is probably just an artifact of this particular sample, and not a general tendency in the total number of chess games world wide. Further, there also seems to be some seasonality in the number of chess games.</p>
+</div>
+<div id="what-is-the-composition-of-results" class="section level3">
+<h3>What is the composition of results?</h3>
+<p>The pie chart below shows the composition of results.</p>
+<p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Okay, the most frequent result is a white win, then a draw and then a win for black. The order is unsurprising, however, I expected to see a larger amount of white wins.</p>
+</div>
+<div id="what-is-the-distribution-of-white-and-blacks-ratings-and-the-distribution-of-the-difference-between-the-ratings" class="section level3">
+<h3>What is the distribution of white and black’s ratings, and the distribution of the difference between the ratings?</h3>
+<p>The plots below show the distributions of the ELO rating for white and black, along with the distribution of the differences between the ELO ratings</p>
+<p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>From the first plot we see that the distributions of the ELO ratings for white and black are the same, so it not like white is usually a better player than black. This observation, is also confirmed by the second plot, where we see that the distribution of difference in ELO ratings is centered around 0, i.e. on average the players are equally good according to ELO. Further, the distribution is also symmetric, meaning that it is equally likely that white is better than black compared to black being better than white. It is worth noticing that the distribution has very long tails, sometimes very good players plays again very bad players.</p>
+</div>
+<div id="what-opening-groups-are-the-most-common" class="section level3">
+<h3>What opening groups are the most common?</h3>
+<p>There are 210 different opening groups. The bar chart below shows the 30 most common, where the rest of the opening groups are lumped into <code>Other</code>.</p>
+<p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>The Sicilian opening, i.e. 1. e4 c5 2. …, is the most popular opening which is used in almost 20% of games. Other popular openings include French, English and Reti. In addition, we see that other openings than the top 30 are used in about 15% of the games, which means that the choice of opening is relatively spread out.</p>
+</div>
+<div id="how-does-the-most-common-opening-groups-change-with-the-level-of-the-players" class="section level3">
+<h3>How does the most common opening groups change with the level of the players?</h3>
+<p>The plot below shows the occurrence rank of the top 40 most common opening groups by different ELO rating intervals. The six opening groups with the largest incline in ranking and the six opening groups with the largest decline in rank have been highlighted.</p>
+<p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>There are lots of insights to be made from the plot above. First of all we notice that the QGD Slav and Nimzo-Indian openings become linearly more popular when the ELO rating increases. This indicated that you are more likely to use the openings the better the player you are, this might be of the cost of them being more difficult to master.</p>
+<p>We also see that the Scandinavian defense is popular for beginners but it is much less used by expert players. The Queen’s Indian is almost never used by beginners and intermediates but is often used by better players. The Bird’s opening is used by intermediate players but rarely used by experts.</p>
+</div>
+<div id="what-are-the-most-popular-move-sequences-for-different-opening-groups" class="section level3">
+<h3>What are the most popular move sequences for different opening groups?</h3>
+<p>The <a href="https://rasmusfb.shinyapps.io/Chess_Opening_Explorer/">shinyapp</a> below presents the first moves for given opening groups. A dark color indicates first move while lighter color indicate higher move numbers. The width of the links indicate how popular the corresponding move is. Hover over the nodes to see the move.</p>
+<iframe width="900" height="600" scrolling="yes" frameborder="no" src="https://rasmusfb.shinyapps.io/Chess_Opening_Explorer/">
+</iframe>
+<p>If we look at the example that is displayed by default we see that the Sicilian opening starts with <code>e4 c5</code>, then we can see that a popular set of moves is <code>Nf3 d6</code> followed by <code>d4 cxd4</code>. In the Sicilian opening there are many popular paths.</p>
+<p>If we take a look at the French opening instead, we see that it always starts with <code>e4 e6</code>, then we see a very popular move emerge compared to the rest, namely <code>d4 d5</code>. This gives rise to a further set of popular moves, e.g. <code>e5 c5</code>.</p>
+<p>The visualization above gives an endless amount of different opportunities to explore the different openings. Please play around with the openings and sliders your self if you are feeling curious.</p>
+</div>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>In this post we took a look at a large chess database.</p>
+<p>We saw that the number of chess games per month were upward trending. We found out that most games are won by white, however, the results are more evenly distributed than initially thought, at least by me.</p>
+<p>We showed that the distribution of ELO rating are the same for both white and black, and that the distribution of differences in ELO ratings is symmetric and centered around zero.</p>
+<p>A bar chart showed that the most popular opening group was the Sicilian and that the choice of opening is spread between many different types of openings.</p>
+<p>Then we found out that the QGD Slav and Nimzo-Indian opening becomes more and more popular with higher ELO ratings, and that the Scandinavian defense is popular for beginners but not for experts.</p>
+<p>Lastly, we explored some of the starting moves from different openings using a shiny app.</p>
+<p>Feel free to comment below, or catch me on <a href="https://www.linkedin.com/in/rasmusfiskerbang/">LinkedIn</a> or <a href="https://twitter.com/FiskerBang">twitter</a>.</p>
+</div>
+
+              
+            </div>
+          </div>
+          <div id="post-footer" class="post-footer main-content-wrap">
+            
+              
+                
+                
+                  <div class="post-footer-tags">
+                    <span class="text-color-light text-small">TAGGED IN</span><br/>
+                    
+  <a class="tag tag--primary tag--small" href="/tags/eda/">EDA</a>
+
+  <a class="tag tag--primary tag--small" href="/tags/visualization/">visualization</a>
+
+  <a class="tag tag--primary tag--small" href="/tags/shiny/">Shiny</a>
+
+  <a class="tag tag--primary tag--small" href="/tags/d3.js/">D3.js</a>
+
+  <a class="tag tag--primary tag--small" href="/tags/network/">Network</a>
+
+  <a class="tag tag--primary tag--small" href="/tags/graph/">Graph</a>
+
+                  </div>
+                
+              
+            
+            <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--disabled">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="/2018/10/predicting-car-prices-using-machine-learning/" data-tooltip="Predicting car prices using Machine Learning">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=/2018/11/chess-matters-exploring-a-chess-database/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=/2018/11/chess-matters-exploring-a-chess-database/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=/2018/11/chess-matters-exploring-a-chess-database/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+            
+              
+                <div id="disqus_thread">
+  <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+              
+            
+          </div>
+        </article>
+        <footer id="footer" class="main-content-wrap">
+  <span class="copyrights">
+    &copy; 2018 Rasmus Fisker Bang. All Rights Reserved
+  </span>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    });
+    </script>
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+</footer>
+
+      </div>
+      <div id="bottom-bar" class="post-bottom-bar" data-behavior="5">
+        <div class="post-actions-wrap">
+  
+      <nav >
+        <ul class="post-actions post-action-nav">
+          
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--disabled">
+              
+                  <i class="fa fa-angle-left"></i>
+                  <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
+                </a>
+            </li>
+            <li class="post-action">
+              
+                <a class="post-action-btn btn btn--default tooltip--top" href="/2018/10/predicting-car-prices-using-machine-learning/" data-tooltip="Predicting car prices using Machine Learning">
+              
+                  <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
+                  <i class="fa fa-angle-right"></i>
+                </a>
+            </li>
+          
+        </ul>
+      </nav>
+    <ul class="post-actions post-action-share" >
+      
+        <li class="post-action hide-lg hide-md hide-sm">
+          <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions">
+            <i class="fa fa-share-alt"></i>
+          </a>
+        </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=/2018/11/chess-matters-exploring-a-chess-database/">
+              <i class="fa fa-facebook-official"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=/2018/11/chess-matters-exploring-a-chess-database/">
+              <i class="fa fa-twitter"></i>
+            </a>
+          </li>
+        
+          <li class="post-action hide-xs">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=/2018/11/chess-matters-exploring-a-chess-database/">
+              <i class="fa fa-google-plus"></i>
+            </a>
+          </li>
+        
+      
+      
+        <li class="post-action">
+          <a class="post-action-btn btn btn--default" href="#disqus_thread">
+            <i class="fa fa-comment-o"></i>
+          </a>
+        </li>
+      
+      <li class="post-action">
+        
+          <a class="post-action-btn btn btn--default" href="#">
+        
+          <i class="fa fa-list"></i>
+        </a>
+      </li>
+    </ul>
+  
+</div>
+
+      </div>
+      <div id="share-options-bar" class="share-options-bar" data-behavior="5">
+  <i id="btn-close-shareoptions" class="fa fa-close"></i>
+  <ul class="share-options">
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=%2F2018%2F11%2Fchess-matters-exploring-a-chess-database%2F">
+          <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=%2F2018%2F11%2Fchess-matters-exploring-a-chess-database%2F">
+          <i class="fa fa-twitter"></i><span>Share on Twitter</span>
+        </a>
+      </li>
+    
+      <li class="share-option">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=%2F2018%2F11%2Fchess-matters-exploring-a-chess-database%2F">
+          <i class="fa fa-google-plus"></i><span>Share on Google&#43;</span>
+        </a>
+      </li>
+    
+  </ul>
+</div>
+<div id="share-options-mask" class="share-options-mask"></div>
+    </div>
+    
+    <div id="about">
+  <div id="about-card">
+    <div id="about-btn-close">
+      <i class="fa fa-remove"></i>
+    </div>
+    
+      <img id="about-card-picture" src="https://res.cloudinary.com/dtz4kneoh/image/upload/v1538336360/bio-pic.jpg" alt="Author&#39;s picture" />
+    
+    <h4 id="about-card-name">Rasmus Fisker Bang</h4>
+    
+      <div id="about-card-bio">Economist who loves making insights from data</div>
+    
+    
+      <div id="about-card-job">
+        <i class="fa fa-briefcase"></i>
+        <br/>
+        Student
+      </div>
+    
+    
+      <div id="about-card-location">
+        <i class="fa fa-map-marker"></i>
+        <br/>
+        Aarhus, Denmark
+      </div>
+    
+  </div>
+</div>
+
+    <div id="algolia-search-modal" class="modal-container">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="close-button"><i class="fa fa-close"></i></span>
+      <a href="https://algolia.com" target="_blank" rel="noopener" class="searchby-algolia text-color-light link-unstyled">
+        <span class="searchby-algolia-text text-color-light text-small">by</span>
+        <img class="searchby-algolia-logo" src="https://www.algolia.com/static_assets/images/press/downloads/algolia-light.svg">
+      </a>
+      <i class="search-icon fa fa-search"></i>
+      <form id="algolia-search-form">
+        <input type="text" id="algolia-search-input" name="search"
+          class="form-control input--large search-input" placeholder="Search" />
+      </form>
+    </div>
+    <div class="modal-body">
+      <div class="no-result text-color-light text-center">no post found</div>
+      <div class="results">
+        
+        
+          <div class="media">
+            
+            <div class="media-body">
+              <a class="link-unstyled" href="/2018/11/chess-matters-exploring-a-chess-database/">
+                <h3 class="media-heading">Chess Matters - Exploring a chess database</h3>
+              </a>
+              <span class="media-meta">
+                <span class="media-date text-small">
+                  Nov 11, 2018
+                </span>
+              </span>
+              <div class="media-content hide-xs font-merryweather">Introduction In this post I am going to explore some chess data. The data is obtained from a free online chess database. In addition, I have scraped chess openings from FICGS and matched them to the first moves from each game from the chess DB.
+Originally the chess DB contained about 3.5 million games, which took up about 2.5 GB. After I removed missing values, incomplete columns etc., I now have about 860000 games, which is much more manageable.</div>
+            </div>
+            <div style="clear:both;"></div>
+            <hr>
+          </div>
+        
+          <div class="media">
+            
+            <div class="media-body">
+              <a class="link-unstyled" href="/2018/10/predicting-car-prices-using-machine-learning/">
+                <h3 class="media-heading">Predicting car prices using Machine Learning</h3>
+              </a>
+              <span class="media-meta">
+                <span class="media-date text-small">
+                  Oct 10, 2018
+                </span>
+              </span>
+              <div class="media-content hide-xs font-merryweather">Introduction In this project we are going to use the dataset Car Features and MSRP, which can be found on Kaggle. As the name suggests the dataset contains features about different car models, along with a variable called MSRP, short for manufacturer’s suggested retail price.
+We are going to make some exploratory data analysis, EDA, and we are going to try to predict the prices of the different car models using machine learning methods.</div>
+            </div>
+            <div style="clear:both;"></div>
+            <hr>
+          </div>
+        
+          <div class="media">
+            
+            <div class="media-body">
+              <a class="link-unstyled" href="/2018/07/the-beautiful-tour/">
+                <h3 class="media-heading">The Beautiful Tour</h3>
+              </a>
+              <span class="media-meta">
+                <span class="media-date text-small">
+                  Jul 7, 2018
+                </span>
+              </span>
+              <div class="media-content hide-xs font-merryweather">Introduction In this project we are going to explore the infamous bicycling race Tour De France! First we will take look at the dataset, and then we are going to try to answer some of the following questions.
+ What is the most winning country? Who is the most winning rider? How many different type of stages do we have, and how frequent are they? Who are the kings of the different types of stage?</div>
+            </div>
+            <div style="clear:both;"></div>
+            <hr>
+          </div>
+        
+      </div>
+    </div>
+    <div class="modal-footer">
+      <p class="results-count text-medium"
+         data-message-zero="no post found"
+         data-message-one="1 post found"
+         data-message-other="{n} posts found">
+         3 posts found
+      </p>
+    </div>
+  </div>
+</div>
+    
+  
+    
+    <div id="cover" style="background-image:url('https://res.cloudinary.com/dtz4kneoh/image/upload/v1538335632/background.png');"></div>
+  
+
+
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.7/js/jquery.fancybox.min.js" integrity="sha256-GEAnjcTqVP+vBp3SSc8bEDQqvWAZMiHyUSIorrWwH50=" crossorigin="anonymous"></script>
+
+
+<script src="/js/script-qi9wbxp2ya2j6p7wx1i6tgavftewndznf4v0hy2gvivk1rxgc3lm7njqb6bz.min.js"></script>
+
+
+<script lang="javascript">
+window.onload = updateMinWidth;
+window.onresize = updateMinWidth;
+document.getElementById("sidebar").addEventListener("transitionend", updateMinWidth);
+function updateMinWidth() {
+  var sidebar = document.getElementById("sidebar");
+  var main = document.getElementById("main");
+  main.style.minWidth = "";
+  var w1 = getComputedStyle(main).getPropertyValue("min-width");
+  var w2 = getComputedStyle(sidebar).getPropertyValue("width");
+  var w3 = getComputedStyle(sidebar).getPropertyValue("left");
+  main.style.minWidth = `calc(${w1} - ${w2} - ${w3})`;
+}
+</script>
+
+<script>
+$(document).ready(function() {
+  hljs.configure({ classPrefix: '', useBR: false });
+  $('pre.code-highlight > code, pre > code').each(function(i, block) {
+    if (!$(this).hasClass('codeblock')) {
+      $(this).addClass('codeblock');
+    }
+    hljs.highlightBlock(block);
+  });
+});
+</script>
+
+
+  
+    
+      <script>
+        var disqus_config = function () {
+          this.page.url = '\/2018\/11\/chess-matters-exploring-a-chess-database\/';
+          
+            this.page.identifier = '\/2018\/11\/chess-matters-exploring-a-chess-database\/'
+          
+        };
+        (function() {
+          
+          
+          if (window.location.hostname == "localhost") {
+            return;
+          }
+          var d = document, s = d.createElement('script');
+          var disqus_shortname = 'thedword-rbind-io';
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      </script>
+    
+  
+
+
+
+
+    
+  </body>
+</html>
+
