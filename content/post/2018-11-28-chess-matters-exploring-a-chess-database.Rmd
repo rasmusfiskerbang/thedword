@@ -67,12 +67,15 @@ Let's take a look at a random game.
 
 ```{r echo=FALSE}
 
-games %>% .[sample(nrow(.),1),] %>% kable() %>% 
+games %>% .[sample(nrow(.),1),] %>% 
+  mutate(moves = str_split(moves, "[0-9]+\\.") %>% unlist() %>% 
+         .[1:5] %>% str_c(., collapse = " ")) %>% 
+  kable() %>% 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
 
 ```
 
-We have a date variable, a result variable, e.g. black wins as here, then we have [ELO](https://en.wikipedia.org/wiki/Elo_rating_system) ratings for white and black, the total number of moves in the game, the actual moves, the name of the opening and the name of the opening group which the opening belongs to. 
+We have a date variable, a result variable, e.g. black wins as here, then we have [ELO](https://en.wikipedia.org/wiki/Elo_rating_system) ratings for white and black, the total number of moves in the game, the actual moves, truncated here, the name of the opening and the name of the opening group which the opening belongs to. 
 
 There are lots of interesting questions that could be asked!
 
