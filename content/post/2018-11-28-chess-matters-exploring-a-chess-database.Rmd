@@ -75,7 +75,7 @@ games %>% .[sample(nrow(.),1),] %>%
 
 ```
 
-We have a date variable, a result variable, e.g. black wins as here, then we have [ELO](https://en.wikipedia.org/wiki/Elo_rating_system) ratings for white and black, the total number of moves in the game, the actual moves, truncated here, the name of the opening and the name of the opening group which the opening belongs to. 
+We have a date variable, a result variable, e.g. black wins as here, then we have [Elo](https://en.wikipedia.org/wiki/Elo_rating_system) ratings for white and black, the total number of moves in the game, the actual moves, truncated here, the name of the opening and the name of the opening group which the opening bElongs to. 
 
 There are lots of interesting questions that could be asked!
 
@@ -131,7 +131,7 @@ Okay, the most frequent result is a white win, then a draw and then a win for bl
 
 ### What is the distribution of white and black's ratings, and the distribution of the difference between the ratings?
 
-The plots below show the distributions of the ELO rating for white and black, along with the distribution of the differences between the ELO ratings
+The plots below show the distributions of the Elo rating for white and black, along with the distribution of the differences between the Elo ratings
 
 ```{r echo=FALSE, warning=FALSE}
 
@@ -140,7 +140,7 @@ p1 <- games %>% select(ends_with("rating")) %>%
   mutate(colour = str_remove(colour, "_[a-z]+$")) %>% 
   ggplot(aes(rating, fill = colour)) + geom_density() +
   scale_fill_paletteer_d(nord, aurora) +
-  labs(title = "Distribution of ELO ratings for white and black",
+  labs(title = "Distribution of Elo ratings for white and black",
        y = "Density", x = "Elo Rating") +
   theme(legend.title = element_blank())
 
@@ -149,13 +149,13 @@ p2 <- games %>% select(ends_with("rating")) %>%
   ggplot(aes(differnce_rating, fill = "blank")) + geom_density() +
   scale_fill_paletteer_d(nord, aurora) +
   labs(title = "Distribution of difference in rating between white and black",
-       y = "Density", x = "Difference in ELO rating between white and black") +
+       y = "Density", x = "Difference in Elo rating between white and black") +
   theme(legend.position = "None")
 
 p1 + p2 + plot_layout(nrow = 2)
 ```
 
-From the first plot we see that the distributions of the ELO ratings for white and black are the same, so it not like white is usually a better player than black. This observation, is also confirmed by the second plot, where we see that the distribution of difference in ELO ratings is centered around 0, i.e. on average the players are equally good according to ELO. Further, the distribution is also symmetric, meaning that it is equally likely that white is better than black compared to black being better than white. It is worth noticing that the distribution has very long tails, sometimes very good players plays again very bad players.
+From the first plot we see that the distributions of the Elo ratings for white and black are the same, so it not like white is usually a better player than black. This observation, is also confirmed by the second plot, where we see that the distribution of difference in Elo ratings is centered around 0, i.e. on average the players are equally good according to Elo. Further, the distribution is also symmetric, meaning that it is equally likely that white is better than black compared to black being better than white. It is worth noticing that the distribution has very long tails, sometimes very good players plays again very bad players.
 
 ### What opening groups are the most common?
 
@@ -228,7 +228,7 @@ highlighted_ranks <- A8 %>%
   select(rank) %>% unlist()
 ```
 
-The plot below shows the occurrence rank of the top 40 most common opening groups by different ELO rating intervals. The six opening groups with the largest incline in ranking and the six opening groups with the largest decline in rank have been highlighted.
+The plot below shows the occurrence rank of the top 40 most common opening groups by different Elo rating intervals. The six opening groups with the largest incline in ranking and the six opening groups with the largest decline in rank have been highlighted.
 
 ```{r echo=FALSE, fig.height=9, fig.width=7}
 A8 %>% ggplot(aes(rank_position, rank, color = opening_group)) +
@@ -238,13 +238,13 @@ A8 %>% ggplot(aes(rank_position, rank, color = opening_group)) +
   scale_x_continuous(breaks = 1:5, labels = ranges) +
   scale_color_manual(values = paletteer_d("ggsci","default_igv")[1:length(highlighted_ranks)]) +
   theme(legend.position = "None") +
-  labs(title = "Occurrence rank of opening groups by ELO rating",
+  labs(title = "Occurrence rank of opening groups by Elo rating",
        subtitle = "Top 40 most common opening groups chosen",
        y = "", x = "Elo rating intervals")
 
 ```
 
-There are lots of insights to be made from the plot above. First of all we notice that the QGD Slav and Nimzo-Indian openings become linearly more popular when the ELO rating increases. This indicated that you are more likely to use the openings the better the player you are, this might be of the cost of them being more difficult to master.
+There are lots of insights to be made from the plot above. First of all we notice that the QGD Slav and Nimzo-Indian openings become linearly more popular when the Elo rating increases. This indicated that you are more likely to use the openings the better the player you are, this might be of the cost of them being more difficult to master.
 
 We also see that the Scandinavian defense is popular for beginners but it is much less used by expert players. The Queen's Indian is almost never used by beginners and intermediates but is often used by better players. The Bird's opening is used by intermediate players but rarely used by experts.
 
@@ -266,11 +266,11 @@ In this post we took a look at a large chess database.
 
 We saw that the number of chess games per month were upward trending. We found out that most games are won by white, however, the results are more evenly distributed than initially thought, at least by me. 
 
-We showed that the distribution of ELO rating are the same for both white and black, and that the distribution of differences in ELO ratings is symmetric and centered around zero.
+We showed that the distribution of Elo rating are the same for both white and black, and that the distribution of differences in Elo ratings is symmetric and centered around zero.
 
 A bar chart showed that the most popular opening group was the Sicilian and that the choice of opening is spread between many different types of openings.
 
-Then we found out that the QGD Slav and Nimzo-Indian opening becomes more and more popular with higher ELO ratings, and that the Scandinavian defense is popular for beginners but not for experts.
+Then we found out that the QGD Slav and Nimzo-Indian opening becomes more and more popular with higher Elo ratings, and that the Scandinavian defense is popular for beginners but not for experts.
 
 Lastly, we explored some of the starting moves from different openings using a shiny app.
 

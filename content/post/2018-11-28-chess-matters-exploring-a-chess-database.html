@@ -87,7 +87,7 @@ King’s Indian
 </tr>
 </tbody>
 </table>
-<p>We have a date variable, a result variable, e.g. black wins as here, then we have <a href="https://en.wikipedia.org/wiki/Elo_rating_system">ELO</a> ratings for white and black, the total number of moves in the game, the actual moves, truncated here, the name of the opening and the name of the opening group which the opening belongs to.</p>
+<p>We have a date variable, a result variable, e.g. black wins as here, then we have <a href="https://en.wikipedia.org/wiki/Elo_rating_system">Elo</a> ratings for white and black, the total number of moves in the game, the actual moves, truncated here, the name of the opening and the name of the opening group which the opening bElongs to.</p>
 <p>There are lots of interesting questions that could be asked!</p>
 </div>
 <div id="questions" class="section level2">
@@ -115,9 +115,9 @@ King’s Indian
 </div>
 <div id="what-is-the-distribution-of-white-and-blacks-ratings-and-the-distribution-of-the-difference-between-the-ratings" class="section level3">
 <h3>What is the distribution of white and black’s ratings, and the distribution of the difference between the ratings?</h3>
-<p>The plots below show the distributions of the ELO rating for white and black, along with the distribution of the differences between the ELO ratings</p>
+<p>The plots below show the distributions of the Elo rating for white and black, along with the distribution of the differences between the Elo ratings</p>
 <p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<p>From the first plot we see that the distributions of the ELO ratings for white and black are the same, so it not like white is usually a better player than black. This observation, is also confirmed by the second plot, where we see that the distribution of difference in ELO ratings is centered around 0, i.e. on average the players are equally good according to ELO. Further, the distribution is also symmetric, meaning that it is equally likely that white is better than black compared to black being better than white. It is worth noticing that the distribution has very long tails, sometimes very good players plays again very bad players.</p>
+<p>From the first plot we see that the distributions of the Elo ratings for white and black are the same, so it not like white is usually a better player than black. This observation, is also confirmed by the second plot, where we see that the distribution of difference in Elo ratings is centered around 0, i.e. on average the players are equally good according to Elo. Further, the distribution is also symmetric, meaning that it is equally likely that white is better than black compared to black being better than white. It is worth noticing that the distribution has very long tails, sometimes very good players plays again very bad players.</p>
 </div>
 <div id="what-opening-groups-are-the-most-common" class="section level3">
 <h3>What opening groups are the most common?</h3>
@@ -127,9 +127,9 @@ King’s Indian
 </div>
 <div id="how-does-the-most-common-opening-groups-change-with-the-level-of-the-players" class="section level3">
 <h3>How does the most common opening groups change with the level of the players?</h3>
-<p>The plot below shows the occurrence rank of the top 40 most common opening groups by different ELO rating intervals. The six opening groups with the largest incline in ranking and the six opening groups with the largest decline in rank have been highlighted.</p>
+<p>The plot below shows the occurrence rank of the top 40 most common opening groups by different Elo rating intervals. The six opening groups with the largest incline in ranking and the six opening groups with the largest decline in rank have been highlighted.</p>
 <p><img src="/post/2018-11-28-chess-matters-exploring-a-chess-database_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-<p>There are lots of insights to be made from the plot above. First of all we notice that the QGD Slav and Nimzo-Indian openings become linearly more popular when the ELO rating increases. This indicated that you are more likely to use the openings the better the player you are, this might be of the cost of them being more difficult to master.</p>
+<p>There are lots of insights to be made from the plot above. First of all we notice that the QGD Slav and Nimzo-Indian openings become linearly more popular when the Elo rating increases. This indicated that you are more likely to use the openings the better the player you are, this might be of the cost of them being more difficult to master.</p>
 <p>We also see that the Scandinavian defense is popular for beginners but it is much less used by expert players. The Queen’s Indian is almost never used by beginners and intermediates but is often used by better players. The Bird’s opening is used by intermediate players but rarely used by experts.</p>
 </div>
 <div id="what-are-the-most-popular-move-sequences-for-different-opening-groups" class="section level3">
@@ -146,9 +146,9 @@ King’s Indian
 <h2>Conclusions</h2>
 <p>In this post we took a look at a large chess database.</p>
 <p>We saw that the number of chess games per month were upward trending. We found out that most games are won by white, however, the results are more evenly distributed than initially thought, at least by me.</p>
-<p>We showed that the distribution of ELO rating are the same for both white and black, and that the distribution of differences in ELO ratings is symmetric and centered around zero.</p>
+<p>We showed that the distribution of Elo rating are the same for both white and black, and that the distribution of differences in Elo ratings is symmetric and centered around zero.</p>
 <p>A bar chart showed that the most popular opening group was the Sicilian and that the choice of opening is spread between many different types of openings.</p>
-<p>Then we found out that the QGD Slav and Nimzo-Indian opening becomes more and more popular with higher ELO ratings, and that the Scandinavian defense is popular for beginners but not for experts.</p>
+<p>Then we found out that the QGD Slav and Nimzo-Indian opening becomes more and more popular with higher Elo ratings, and that the Scandinavian defense is popular for beginners but not for experts.</p>
 <p>Lastly, we explored some of the starting moves from different openings using a shiny app.</p>
 <p>Feel free to comment below, or catch me on <a href="https://www.linkedin.com/in/rasmusfiskerbang/">LinkedIn</a> or <a href="https://twitter.com/FiskerBang">twitter</a>.</p>
 </div>
